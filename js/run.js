@@ -65,6 +65,7 @@ var DG = typeof GameGlobal !== 'undefined' ? (GameGlobal.DG = GameGlobal.DG || {
     R.fever = 0; R.feverT = 0; R.feverCount = 0;
     R.fossilN = 0; R.healN = 0;                 // 每局化石上限 / 回血递减计数
     R.giftT = 0;                                // 开局赠礼演出倒计时
+    R.exitTipShown = false; R.wiseWarned = false; // 撤离教学提示（每局一次）
     R.itemsUsed = 0; R.oreGot = 0; R.blocksCleared = 0;
     R.perks = []; R.perkChoices = null; R.pendingPerks = 0;
     R.tagSetDone = {};              // 已激活的流派羁绊
@@ -473,6 +474,11 @@ var DG = typeof GameGlobal !== 'undefined' ? (GameGlobal.DG = GameGlobal.DG || {
       if (m >= 100) {
         R.exitMult = Math.min(2, R.exitMult + (R.mods.exitStep || 0.1));
         mileTxt += ' · 🏳×' + R.exitMult.toFixed(1);
+        // 新手教学（前3局，每局一次）：撤离倍率是"主动走才能带走"的，阵亡作废
+        if (!R.exitTipShown && DG.SAVE.d.runCount < 3) {
+          R.exitTipShown = true;
+          DG.FX.banner('🏳 撤离倍率已激活 · 主动撤离才能带走，阵亡会作废!', { color: '#ffd15c', size: 40, life: 2.6, pri: true });
+        }
       }
       DG.FX.banner(mileTxt, { color: '#4cd471', size: 44, life: 1.3 });
       DG.A.sfx('milestone', { vibrate: true });

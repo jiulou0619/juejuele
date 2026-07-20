@@ -451,6 +451,12 @@ var DG = typeof GameGlobal !== 'undefined' ? (GameGlobal.DG = GameGlobal.DG || {
       // 撤离按钮（右下大按钮）；时机成熟时隐晦发光提示——懂的人自然懂
       if (R.state === 'play') {
         var wiseExit = durLow && R.exitMult > 1;   // 血少+倍率在手=该考虑走了
+        var newbieWise = wiseExit && DG.SAVE.d.runCount < 3; // 新手期把话挑明；老手保持隐晦
+        if (newbieWise && !R.wiseWarned) {
+          R.wiseWarned = true;
+          DG.FX.banner('⚠️ 镐子快碎了! 现在撤离可保住 ×' + R.exitMult.toFixed(1) + ' 奖励', { color: '#ff6e85', size: 42, life: 2.4, pri: true });
+          DG.A.sfx('hurt', { vibrate: true, strong: true });
+        }
         var exitTxt = R.exitMult > 1 ? '撤离 ×' + R.exitMult.toFixed(1) : '撤离结算';
         var exitCol = R.exitMult > 1 ? '#8f6a1e' : '#3a4356';
         if (wiseExit) {
@@ -458,7 +464,7 @@ var DG = typeof GameGlobal !== 'undefined' ? (GameGlobal.DG = GameGlobal.DG || {
           ctx.lineWidth = 4;
           U.rr(ctx, P.W - 254, y0 + 4, 238, 104, 16); ctx.stroke();
         }
-        if (UI.button(P.W - 250, y0 + 8, 230, 96, exitTxt, { color: exitCol, txtColor: '#fff', fontSize: 26, glyph: 'ui_flag', sub: wiseExit ? '见好就收…?' : (R.exitMult > 1 ? '满载而归' : null) })) DG.Run.exitRun();
+        if (UI.button(P.W - 250, y0 + 8, 230, 96, exitTxt, { color: exitCol, txtColor: '#fff', fontSize: 26, glyph: 'ui_flag', sub: newbieWise ? '阵亡丢×' + R.exitMult.toFixed(1) + '奖励!' : wiseExit ? '见好就收…?' : (R.exitMult > 1 ? '满载而归' : null) })) DG.Run.exitRun();
       }
     },
 
