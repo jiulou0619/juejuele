@@ -6,6 +6,7 @@ var DG = typeof GameGlobal !== 'undefined' ? (GameGlobal.DG = GameGlobal.DG || {
   var tab = 'shop';
   var boxResult = null;      // 开盒结果 {item,isNew,dust}
   var boxAnim = null;        // CSGO式开箱滚动动画
+  var puzzleShow = null;     // 拼图完成后的整图展示悬浮
   var codexPage = 0;         // 图鉴翻页页码
   var wheel = { ang: 0, spinning: false, t: 0, dur: 0, from: 0, to: 0, targetIdx: -1, result: null };
 
@@ -80,7 +81,16 @@ var DG = typeof GameGlobal !== 'undefined' ? (GameGlobal.DG = GameGlobal.DG || {
     for (var i = 0; i < 26; i++) reel.push(all[Math.floor(Math.random() * all.length)]);
     var land = 21;
     reel[land] = res.item;
-    boxAnim = { reel: reel, res: res, land: land, t: 0, dur: 2.0, hold: 0, jit: (Math.random() - 0.5) * 56 };
+    var jit = (Math.random() - 0.5) * 56;
+    // 非SSR时90%概率：落点前一格放SSR，指针刚划过它才停——"就差一格"
+    if (res.rar !== 'SSR' && Math.random() < 0.9) {
+      var ssrs = all.filter(function (it2) { return it2.rar === 'SSR'; });
+      if (ssrs.length) {
+        reel[land - 1] = U.pick(ssrs);
+        jit = -(12 + Math.random() * 40); // 停得偏左，贴着刚错过的SSR
+      }
+    }
+    boxAnim = { reel: reel, res: res, land: land, t: 0, dur: 2.0, hold: 0, jit: jit };
     DG.A.sfx('wheel_spin');
   }
 
@@ -154,7 +164,7 @@ var DG = typeof GameGlobal !== 'undefined' ? (GameGlobal.DG = GameGlobal.DG || {
   }
 
   DG.Main.scene('meta', {
-    enter: function (arg) { tab = arg || 'shop'; boxResult = null; boxAnim = null; codexPage = 0; wheel.spinning = false; wheel.result = null; },
+    enter: function (arg) { tab = arg || 'shop'; boxResult = null; boxAnim = null; puzzleShow = null; codexPage = 0; wheel.spinning = false; wheel.result = null; },
 
     frame: function (dt, ctx) {
       var s = DG.SAVE.d;
@@ -166,7 +176,7 @@ var DG = typeof GameGlobal !== 'undefined' ? (GameGlobal.DG = GameGlobal.DG || {
         ctx.fillRect(-4, -4, P.W + 8, P.H + 8);
       }
       // 返回键在最左，货币栏右移让位（修遮挡bug）
-      var modal = tab === 'box' && (!!boxResult || !!boxAnim);
+      var modal = (tab === 'box' && (!!boxResult || !!boxAnim)) || (tab === 'puzzle' && !!puzzleShow);
       if (UI.button(14, P.safeTop + 26, 72, 52, '←', { color: '#3a4356', txtColor: '#fff', fontSize: 30, disabled: modal })) { DG.Main.go('home'); return; }
       var by = UI.currencyBar([
         { icon: 'ui_coin', txt: U.fmt(s.coin) },
@@ -232,7 +242,10 @@ var DG = typeof GameGlobal !== 'undefined' ? (GameGlobal.DG = GameGlobal.DG || {
       UI.bar(40, top + 4, P.W - 80, 26, s.pityBox / D.pity.ssr, hot ? '#ffb02e' : UI.C.purple, 'SSR保底 ' + s.pityBox + '/' + D.pity.ssr + (hot ? ' 🔥' : ''));
       UI.label(P.W / 2, top + 48, '🎟️×' + s.boxkey + ' · N58% R30% SR10% SSR2% · 25抽硬保底', { size: 19, align: 'center', color: UI.C.dim });
       if (UI.button(40, top + 68, (P.W - 100) / 2, 70, '开1个 (🎟️1)', { fontSize: 28, disabled: s.boxkey < 1 || busy })) { s.boxkey--; startCase(rollBox()); }
-      if (UI.button(60 + (P.W - 100) / 2, top + 68, (P.W - 100) / 2, 70, '开1个 (💎' + D.boxCost.gem + ')', { color: '#5a4a8f', txtColor: '#fff', fontSize: 28, disabled: s.gem < D.boxCost.gem || busy })) { s.gem -= D.boxCost.gem; startCase(rollBox()); }
+      if (UI.button(60 + (P.W - 100) / 2, top + 68, (P.W - 100) / 2, 70, '开1个 (💎' + D.boxCost.gem + ')', { color: '#5a4a8f', txtColor: '#fff', fontSize: 28, disabled: busy })) {
+        if (s.gem >= D.boxCost.gem) { s.gem -= D.boxCost.gem; startCase(rollBox()); }
+        else DG.PAY.show('box', D.boxCost.gem - s.gem); // 钻石不足→直接开收银台
+      }
       var yy = top + 152;
       // 保底走廊：差≤5抽 → 一键冲底"必出SSR"（冲刺8折48/抽，先耗手里的券）
       if (pityRemain <= D.iap.pityKeyWindow && s.boxCount > 0) {
@@ -322,7 +335,7 @@ var DG = typeof GameGlobal !== 'undefined' ? (GameGlobal.DG = GameGlobal.DG || {
       if (boxResult) {
         UI.dim(0.82);
         var it = boxResult.item, rc = D.rarCfg[it.rar];
-        var bx = P.W / 2 - 220, bw = 440, bh = 470, byy = P.H / 2 - 300;
+        var bx = P.W / 2 - 220, bw = 440, bh = 540, byy = P.H / 2 - 320;
         UI.panel(bx, byy, bw, bh, { borderColor: rc.color, color: it.rar === 'SSR' ? '#3a3020' : null });
         UI.label(P.W / 2, byy + 50, it.rar + (boxResult.isNew ? '  ✨NEW✨' : '  (重复)'), { size: 34, bold: true, align: 'center', color: rc.color });
         ctx.font = '130px Xiaolai, sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
@@ -330,8 +343,12 @@ var DG = typeof GameGlobal !== 'undefined' ? (GameGlobal.DG = GameGlobal.DG || {
         UI.label(P.W / 2, byy + 290, '【' + it.set.name + '】' + it.name, { size: 30, bold: true, align: 'center', color: '#fff' });
         UI.label(P.W / 2, byy + 334, boxResult.isNew ? ('词条: ' + it.set.statName + '+' + rc.pct * (it.set.stat === 'durMax' ? 2 : 1) + (it.set.unit || '')) : ('分解 → ✨星尘+' + boxResult.dust), { size: 24, align: 'center', color: UI.C.dim });
         if (boxResult.multi) UI.label(P.W / 2, byy + 364, boxResult.multi, { size: 20, align: 'center', color: '#8fd0ff' });
-        if (UI.button(bx + 30, byy + bh - 90, (bw - 80) / 2, 62, '再开 (🎟️' + s.boxkey + ')', { fontSize: 24, disabled: s.boxkey < 1 })) { s.boxkey--; boxResult = null; startCase(rollBox()); }
-        if (UI.button(bx + bw / 2 + 10, byy + bh - 90, (bw - 80) / 2, 62, '收下', { color: '#3a4356', txtColor: '#fff', fontSize: 24 })) boxResult = null;
+        if (UI.button(bx + 30, byy + bh - 162, (bw - 80) / 2, 60, '再开 (🎟️' + s.boxkey + ')', { fontSize: 23, disabled: s.boxkey < 1 })) { s.boxkey--; boxResult = null; startCase(rollBox()); }
+        if (UI.button(bx + bw / 2 + 10, byy + bh - 162, (bw - 80) / 2, 60, '再开 (💎' + D.boxCost.gem + ')', { color: '#5a4a8f', txtColor: '#fff', fontSize: 23 })) {
+          if (s.gem >= D.boxCost.gem) { s.gem -= D.boxCost.gem; boxResult = null; startCase(rollBox()); }
+          else DG.PAY.show('box', D.boxCost.gem - s.gem);
+        }
+        if (UI.button(bx + 30, byy + bh - 88, bw - 60, 58, '收下', { color: '#3a4356', txtColor: '#fff', fontSize: 24 })) boxResult = null;
       }
       // 开箱滚动动画（最后画，盖住一切）
       if (boxAnim) drawCase(ctx, dt);
@@ -347,25 +364,30 @@ var DG = typeof GameGlobal !== 'undefined' ? (GameGlobal.DG = GameGlobal.DG || {
       /* 翻页书：矿物页 + 化石页，左右翻页（上下滑动会让很多人错过下半部分） */
       var listTop = top + 44;
       var viewH = P.H - listTop - 14;
-      var minPer = 20, foPer = 4;
+      var minPer = 20, foPer = 4, pzPer = 4;
       var minPages = Math.ceil(D.codex.length / minPer);
       var foPages = Math.ceil(D.fossilList.length / foPer);
-      var totalPages = minPages + foPages;
+      var pzPages = Math.ceil(D.puzzles.length / pzPer);
+      var totalPages = minPages + foPages + pzPages;
       if (codexPage < 0) codexPage = 0;
       if (codexPage >= totalPages) codexPage = totalPages - 1;
       var bookH = Math.min(viewH, 1030);
       UI.img9('bs_book', 10, listTop, P.W - 20, bookH, 26, 42, true);
       var isMin = codexPage < minPages;
+      var isFo = !isMin && codexPage < minPages + foPages;
       // 标题放左页、加成信息放右页：中缝装饰不再压字
-      UI.label(190, listTop + 44, isMin ? '⛏️ 矿物图鉴' : '🦴 化石收藏', { size: 28, bold: true, align: 'center', color: '#6b4a20', maxW: 330 });
+      UI.label(190, listTop + 44, isMin ? '⛏️ 矿物图鉴' : isFo ? '🦴 化石收藏' : '🧩 拼图画廊', { size: 28, bold: true, align: 'center', color: '#6b4a20', maxW: 330 });
       if (isMin) {
         UI.label(560, listTop + 38, '每发现10条 → 全局金币+2%', { size: 18, align: 'center', color: '#8a6c44', maxW: 330 });
         UI.label(560, listTop + 62, '首次发现给星钻', { size: 18, align: 'center', color: '#8a6c44', maxW: 330 });
-      } else {
+      } else if (isFo) {
         var cnt = { green: 0, purple: 0, orange: 0 }, tot = { green: 0, purple: 0, orange: 0 };
         for (var f0 = 0; f0 < D.fossilList.length; f0++) { tot[D.fossilList[f0].tier]++; if (s.fossils[D.fossilList[f0].id]) cnt[D.fossilList[f0].tier]++; }
         UI.label(560, listTop + 38, '绿' + cnt.green + '/' + tot.green + '(金币+3%) 紫' + cnt.purple + '/' + tot.purple + '(耐久+10)', { size: 18, align: 'center', color: '#7a5c34', maxW: 330 });
         UI.label(560, listTop + 62, '橙' + cnt.orange + '/' + tot.orange + '(深度结算+5%)', { size: 18, align: 'center', color: '#7a5c34', maxW: 330 });
+      } else {
+        UI.label(560, listTop + 38, '已完成 ' + s.puzzleDone + ' / ' + D.puzzles.length + ' 幅', { size: 18, align: 'center', color: '#8a6c44', maxW: 330 });
+        UI.label(560, listTop + 62, '每完成一幅 → 永久金币+1%', { size: 18, align: 'center', color: '#8a6c44', maxW: 330 });
       }
       var cy0 = listTop + 92;
       if (isMin) {
@@ -400,7 +422,7 @@ var DG = typeof GameGlobal !== 'undefined' ? (GameGlobal.DG = GameGlobal.DG || {
             UI.label(x + cellW / 2, y + 108, '💎' + e.gem, { size: 18, align: 'center', color: '#9a7c50' });
           }
         }
-      } else {
+      } else if (isFo) {
         // ---- 化石收藏页（每页4张大卡 2×2）----
         var cardW = 296, cardH = 372;
         var fstart = (codexPage - minPages) * foPer;
@@ -442,6 +464,43 @@ var DG = typeof GameGlobal !== 'undefined' ? (GameGlobal.DG = GameGlobal.DG || {
             UI.label(fx + 14, fy + cardW + 16, '？？？', { size: 22, bold: true, color: '#8a6c44' });
             UI.label(fx + cardW - 14, fy + cardW + 16, ftr.name, { size: 20, align: 'right', color: ftr.color });
             UI.label(fx + 14, fy + cardW + 46, fo.tier === 'orange' ? '100m+深处出土' : fo.tier === 'purple' ? '40m+出土' : '挖到化石块出土', { size: 18, color: '#8a6c44' });
+          }
+        }
+      } else {
+        // ---- 拼图画廊页（每页4幅 2×2）----
+        var pcW = 296, pcH = 372;
+        var pstart = (codexPage - minPages - foPages) * pzPer;
+        for (var pi = pstart; pi < Math.min(D.puzzles.length, pstart + pzPer); pi++) {
+          var pz2 = D.puzzles[pi];
+          var pli = pi - pstart;
+          var px2 = (pli % 2) ? 402 : 48;
+          var py2 = cy0 + Math.floor(pli / 2) * (pcH + 16);
+          var pimg2 = DG.A.images['puzzle_' + pz2.id];
+          var doneP = pi < s.puzzleDone;
+          var curP = pi === s.puzzleDone;
+          if (doneP) { // 已完成：整图+金框
+            if (pimg2) ctx.drawImage(pimg2, px2 + 8, py2 + 8, pcW - 16, pcW - 16);
+            ctx.strokeStyle = '#d8a032'; ctx.lineWidth = 4;
+            U.rr(ctx, px2 + 2, py2 + 2, pcW - 4, pcH - 4, 12); ctx.stroke();
+            UI.label(px2 + 14, py2 + pcW + 16, pz2.name, { size: 22, bold: true, color: '#6b4a20', maxW: pcW - 90 });
+            UI.label(px2 + pcW - 14, py2 + pcW + 16, '✅', { size: 24, align: 'right' });
+            UI.label(px2 + 14, py2 + pcW + 46, pz2.rtxt, { size: 17, color: '#8a6c44', maxW: pcW - 28 });
+          } else { // 进行中/未开始：幽灵图+虚线
+            ctx.fillStyle = 'rgba(105,82,52,0.15)';
+            U.rr(ctx, px2, py2, pcW, pcH, 12); ctx.fill();
+            if (pimg2) {
+              ctx.globalAlpha = curP ? 0.25 : 0.08;
+              ctx.drawImage(pimg2, px2 + 8, py2 + 8, pcW - 16, pcW - 16);
+              ctx.globalAlpha = 1;
+            }
+            ctx.save();
+            ctx.setLineDash([8, 7]);
+            ctx.strokeStyle = 'rgba(96,72,44,0.6)'; ctx.lineWidth = 3;
+            U.rr(ctx, px2 + 2, py2 + 2, pcW - 4, pcH - 4, 12); ctx.stroke();
+            ctx.restore();
+            UI.label(px2 + 14, py2 + pcW + 16, curP ? pz2.name : '？？？', { size: 22, bold: true, color: '#8a6c44', maxW: pcW - 110 });
+            UI.label(px2 + pcW - 14, py2 + pcW + 16, curP ? (s.pieceInCur + '/9') : '未解锁', { size: 20, align: 'right', color: curP ? '#6b8f3a' : '#9a7c50' });
+            UI.label(px2 + 14, py2 + pcW + 46, curP ? '拼图页镶嵌碎片继续' : '完成上一幅后开启', { size: 17, color: '#9a7c50', maxW: pcW - 28 });
           }
         }
       }
@@ -559,8 +618,12 @@ var DG = typeof GameGlobal !== 'undefined' ? (GameGlobal.DG = GameGlobal.DG || {
       if (UI.button(40, byy, (P.W - 100) / 2, 70, free ? '🆓 免费转 (每日1次)' : '明日再来', { fontSize: 24, disabled: !free || wheel.spinning })) { s.daily.wheelFree = true; DG.SAVE.save(); spin(); }
       if (UI.button(60 + (P.W - 100) / 2, byy, (P.W - 100) / 2, 70, '🎫 用券转 (' + s.ticket + ')', { fontSize: 24, disabled: s.ticket < 1 || wheel.spinning })) { s.ticket--; DG.SAVE.save(); spin(); }
       var canBuy = !s.daily.ticketBought;
-      if (UI.button(40, byy + 84, P.W - 80, 56, canBuy ? '🪙' + D.ticketCoinCost + ' 购转盘券 (日限1)' : '今日已购', { color: '#3a4356', txtColor: '#fff', fontSize: 22, disabled: !canBuy || s.coin < D.ticketCoinCost })) {
+      if (UI.button(40, byy + 84, (P.W - 100) / 2, 56, canBuy ? '🪙' + D.ticketCoinCost + ' 购券(日1)' : '今日已购', { color: '#3a4356', txtColor: '#fff', fontSize: 22, disabled: !canBuy || s.coin < D.ticketCoinCost })) {
         s.coin -= D.ticketCoinCost; s.ticket++; s.daily.ticketBought = true; DG.SAVE.save(); DG.A.sfx('buy');
+      }
+      if (UI.button(60 + (P.W - 100) / 2, byy + 84, (P.W - 100) / 2, 56, '💎' + D.iap.wheelGem + ' 直接转', { color: '#5a4a8f', txtColor: '#fff', fontSize: 22, disabled: wheel.spinning })) {
+        if (s.gem >= D.iap.wheelGem) { s.gem -= D.iap.wheelGem; D.track('wheel_gem'); DG.SAVE.save(); spin(); }
+        else DG.PAY.show('wheel', D.iap.wheelGem - s.gem); // 钻石不足→直接开收银台
       }
       UI.label(P.W / 2, byy + 170, '额外获取：当日累计挖600m+1券 · 大奖5%概率', { size: 20, align: 'center', color: UI.C.dim });
     },
@@ -568,6 +631,27 @@ var DG = typeof GameGlobal !== 'undefined' ? (GameGlobal.DG = GameGlobal.DG || {
     /* ================= 拼图 ================= */
     puzzle: function (ctx, top) {
       var s = DG.SAVE.d, D = DG.D;
+      // 完成整图展示：玩家点掉才进入下一幅
+      if (puzzleShow) {
+        UI.dim(0.9);
+        var fimg = DG.A.images['puzzle_' + puzzleShow.id];
+        var sz = P.W - 110, fx2 = 55, fy2 = Math.max(P.safeTop + 150, P.H / 2 - sz / 2 - 70);
+        UI.label(P.W / 2, fy2 - 66, '🎉 拼 图 完 成 !', { size: 46, bold: true, align: 'center', color: '#ffd76a' });
+        if (fimg) {
+          ctx.drawImage(fimg, fx2, fy2, sz, sz);
+          ctx.strokeStyle = '#ffd76a'; ctx.lineWidth = 6;
+          U.rr(ctx, fx2 - 3, fy2 - 3, sz + 6, sz + 6, 10); ctx.stroke();
+        } else {
+          UI.panel(fx2, fy2, sz, sz);
+        }
+        UI.label(P.W / 2, fy2 + sz + 48, '【' + puzzleShow.name + '】', { size: 34, bold: true, align: 'center', color: '#fff' });
+        UI.label(P.W / 2, fy2 + sz + 90, '🎁 ' + puzzleShow.rtxt + ' · 永久金币+1%', { size: 24, align: 'center', color: '#8fd0ff', maxW: P.W - 80 });
+        ctx.globalAlpha = 0.7 + 0.3 * Math.sin(Date.now() / 250);
+        UI.label(P.W / 2, fy2 + sz + 136, '👆 点击任意处收下', { size: 24, align: 'center', color: '#ffd76a' });
+        ctx.globalAlpha = 1;
+        if (UI.tap) { UI.tap = null; puzzleShow = null; }
+        return;
+      }
       if (s.puzzleDone >= D.puzzles.length) {
         UI.label(P.W / 2, top + 100, '🎉 全部拼图已完成!', { size: 40, bold: true, align: 'center', color: '#ffd76a' });
         return;
@@ -643,8 +727,8 @@ var DG = typeof GameGlobal !== 'undefined' ? (GameGlobal.DG = GameGlobal.DG || {
         DG.A.sfx('puzzle_place', { vibrate: true });
         if (s.pieceInCur >= 9) {
           DG.Run.grantGive(pz.reward);
+          puzzleShow = { id: pz.id, name: pz.name, rtxt: pz.rtxt }; // 整图展示悬浮，点掉才进下一幅
           s.puzzleDone++; s.pieceInCur = 0;
-          DG.FX.banner('🧩 完成【' + pz.name + '】' + pz.rtxt, { color: '#ffd76a', size: 42, life: 2.2 });
           DG.A.sfx('puzzle_done', { vibrate: true, strong: true });
           DG.D.calcBonuses();
         }

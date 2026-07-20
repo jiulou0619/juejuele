@@ -80,12 +80,32 @@ var DG = typeof GameGlobal !== 'undefined' ? (GameGlobal.DG = GameGlobal.DG || {
     opts = opts || {};
     var ctx = P.ctx;
     var pressed = !opts.disabled && pressHit(x, y, w, h);
+    var prImg = DG.A.images.pr_btn;
     var bsImg = DG.A.images.bs_button;
     var secondary = opts.color === '#3a4356' || opts.color === UI.C.panel2 || (typeof opts.color === 'string' && opts.color.indexOf('rgba') === 0);
     ctx.save();
     if (pressed) { ctx.translate(0, 2); }
     var txtCol, subCol;
-    if (bsImg) {
+    if (prImg) { // Prinbles UNDER 橄榄石板
+      if (opts.disabled) ctx.globalAlpha = 0.5;
+      ninePatch(ctx, prImg, x, y, w, h, 24, Math.min(20, h * 0.35));
+      if (secondary && !opts.disabled) { // 次要钮：暗色罩层区分主次
+        ctx.fillStyle = 'rgba(18,22,32,0.45)';
+        U.rr(ctx, x + 3, y + 3, w - 6, h - 6, 10); ctx.fill();
+      }
+      ctx.globalAlpha = 1;
+      var accent2 = (opts.disabled || secondary) ? null : opts.color;
+      if (accent2 && accent2 !== UI.C.pri) { // 特殊色按钮保留色光边语义
+        ctx.strokeStyle = accent2;
+        ctx.globalAlpha = 0.85; ctx.lineWidth = 2.5;
+        U.rr(ctx, x + 3, y + 3, w - 6, h - 6, 10); ctx.stroke();
+        ctx.globalAlpha = 1;
+      }
+      txtCol = opts.disabled ? '#9aa08a' : '#fff8e0';
+      subCol = opts.disabled ? '#9aa08a' : 'rgba(255,250,225,0.78)';
+      ctx.shadowColor = opts.disabled ? 'transparent' : 'rgba(30,32,14,0.85)';
+      ctx.shadowOffsetY = 2;
+    } else if (bsImg) {
       ctx.imageSmoothingEnabled = false;
       if (opts.disabled) ctx.globalAlpha = 0.55;
       ninePatch(ctx, bsImg, x, y, w, h, 13, Math.min(18, h * 0.4));
@@ -299,11 +319,13 @@ var DG = typeof GameGlobal !== 'undefined' ? (GameGlobal.DG = GameGlobal.DG || {
     var ctx = P.ctx, y = P.safeTop + 26, h = 52;
     if (x0 == null) x0 = 20;
     var w = Math.min(220, (P.W - x0 - 20) / items.length - 10);
+    var plate = DG.A.images.pr_plate;
     for (var i = 0; i < items.length; i++) {
       var x = x0 + i * (w + 10);
-      UI.panel(x, y, w, h, { color: 'rgba(0,0,0,0.5)', r: 26, border: false });
-      DG.A.draw(ctx, items[i].icon, x + 6, y + 6, 40, 40);
-      UI.label(x + 54, y + h / 2, items[i].txt, { size: 26, bold: true, color: UI.C.gold, maxW: w - 60 });
+      if (plate) UI.img9('pr_plate', x, y, w, h, 18, 20, false, 1);
+      else UI.panel(x, y, w, h, { color: 'rgba(0,0,0,0.5)', r: 26, border: false });
+      DG.A.draw(ctx, items[i].icon, x + 7, y + 7, h - 14, h - 14);
+      UI.label(x + h + 2, y + h / 2 + 1, items[i].txt, { size: 25, bold: true, color: plate ? '#3d3d26' : UI.C.gold, maxW: w - h - 10 });
     }
     return y + h;
   };

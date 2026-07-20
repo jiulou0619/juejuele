@@ -19,7 +19,9 @@ var DG = typeof GameGlobal !== 'undefined' ? (GameGlobal.DG = GameGlobal.DG || {
     box_pity: '✨ 冲刺保底还差 {n}💎',
     perk4: '🔒 那张金卡还差 {n}💎',
     puzzle: '🧩 最后一片还差 {n}💎',
-    wish: '🔦 点亮矿灯还差 {n}💎'
+    wish: '🔦 点亮矿灯还差 {n}💎',
+    box: '🎁 再开一盒还差 {n}💎',
+    wheel: '🎡 再转一次还差 {n}💎'
   };
 
   /* 在场景控件声明之前调用：独占本帧点击 */

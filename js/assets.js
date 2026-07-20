@@ -16,11 +16,11 @@ var DG = typeof GameGlobal !== 'undefined' ? (GameGlobal.DG = GameGlobal.DG || {
 
   /* 绘制资源占位：底色圆角块 + 居中 glyph */
   A.draw = function (ctx, id, x, y, w, h, opts) {
-    var r = A.reg[id];
     opts = opts || {};
-    if (!r) { ctx.fillStyle = '#f0f'; ctx.fillRect(x, y, w, h); return; }
     var img = A.images[id];
-    if (img) { ctx.drawImage(img, x, y, w, h); return; } // 未来真实贴图直接生效
+    if (img) { ctx.drawImage(img, x, y, w, h); return; } // 有真实贴图直接画（无需注册占位）
+    var r = A.reg[id];
+    if (!r) { ctx.fillStyle = '#f0f'; ctx.fillRect(x, y, w, h); return; }
     if (r.shape !== 'none') {
       ctx.fillStyle = opts.color || r.color || '#555';
       if (r.shape === 'circle') {
@@ -51,7 +51,7 @@ var DG = typeof GameGlobal !== 'undefined' ? (GameGlobal.DG = GameGlobal.DG || {
     coin: 'collect_point.mp3', milestone: 'bonus_sound.mp3', layer: 'new_level.mp3',
     ice: 'sharp_sound_sound.mp3', poison: 'collect_item.mp3', purify: 'bonus_earned.mp3',
     tnt: 'tnt.mp3', dead: 'failed.mp3',
-    settle_count: 'fast_high_ui_sound.mp3', box_open: 'success.mp3', box_ssr: 'bonus_earned.mp3',
+    settle_count: 'fast_high_ui_sound.mp3', box_open: 'success.mp3', box_ssr: 'yay.mp3',
     wheel_spin: 'fast_high_ui_sound.mp3', wheel_win: 'success.mp3',
     puzzle_place: 'collect_item.mp3', puzzle_done: 'bonus_earned.mp3',
     buy: 'gold_acquire_sound.mp3', event: 'interface_click.mp3', ui: 'interface_click.mp3'
@@ -60,6 +60,8 @@ var DG = typeof GameGlobal !== 'undefined' ? (GameGlobal.DG = GameGlobal.DG || {
   var hasWxAudio = typeof wx !== 'undefined' && !!wx.createInnerAudioContext;
   A.sfx = function (id, opts) {
     if (opts && opts.vibrate) DG.P.vibrate(opts.strong);
+    var sv = DG.SAVE && DG.SAVE.d;
+    if (sv && sv.opt && !sv.opt.sfx) return; // 音效开关
     var f = A.sfxFiles[id];
     if (!f) return;
     var now = Date.now();
@@ -83,41 +85,55 @@ var DG = typeof GameGlobal !== 'undefined' ? (GameGlobal.DG = GameGlobal.DG || {
         pool.push(a);
       }
       if (!a) return;
-      if (hasWxAudio) { a.__busy = true; a.stop(); a.play(); }
-      else { a.currentTime = 0; a.volume = 0.85; var pr = a.play(); if (pr && pr.catch) pr.catch(function () {}); }
+      if (hasWxAudio) { a.__busy = true; a.volume = 0.3; a.stop(); a.play(); }
+      else { a.currentTime = 0; a.volume = 0.3; var pr = a.play(); if (pr && pr.catch) pr.catch(function () {}); }
     } catch (e) {}
   };
 
-  /* ---------- BGM：4首顺序播放，放完循环回第1首 ---------- */
+  /* ---------- BGM：bgm_1→2→3→4→回到1 永久循环，音量30%，可开关 ---------- */
   A.bgmFiles = ['bgm_1.mp3', 'bgm_2.mp3', 'bgm_3.mp3', 'bgm_4.mp3'];
   var bgm = { idx: 0, cur: null, started: false };
+  function bgmOn() { var sv = DG.SAVE && DG.SAVE.d; return !(sv && sv.opt && !sv.opt.bgm); }
   function playBgmTrack(i) {
     bgm.idx = ((i % A.bgmFiles.length) + A.bgmFiles.length) % A.bgmFiles.length;
+    if (!bgmOn()) { bgm.started = false; return; }
     var src = 'assets/sfx/' + A.bgmFiles[bgm.idx];
     try {
       if (hasWxAudio) {
         if (!bgm.cur) {
           bgm.cur = wx.createInnerAudioContext();
-          bgm.cur.onEnded(function () { playBgmTrack(bgm.idx + 1); });
+          bgm.cur.onEnded(function () { playBgmTrack(bgm.idx + 1); }); // 放完接下一首，取模回到第1首
           bgm.cur.onError(function () { playBgmTrack(bgm.idx + 1); });
         }
-        bgm.cur.src = src; bgm.cur.volume = 0.45; bgm.cur.play();
+        bgm.cur.src = src; bgm.cur.volume = 0.3; bgm.cur.play();
       } else {
         if (!bgm.cur) {
           bgm.cur = new Audio();
           bgm.cur.addEventListener('ended', function () { playBgmTrack(bgm.idx + 1); });
           bgm.cur.addEventListener('error', function () { playBgmTrack(bgm.idx + 1); });
         }
-        bgm.cur.src = src; bgm.cur.volume = 0.45;
+        bgm.cur.src = src; bgm.cur.volume = 0.3;
         var pr = bgm.cur.play();
         if (pr && pr.catch) pr.catch(function () { bgm.started = false; }); // 浏览器需用户手势，失败下次点按重试
       }
     } catch (e) { bgm.started = false; }
   }
   A.startBgm = function () {
-    if (bgm.started) return;
+    if (bgm.started || !bgmOn()) return;
     bgm.started = true;
     playBgmTrack(bgm.idx);
+  };
+  /* 开关切换：关=暂停当前曲目，开=从暂停处继续（或重新起播） */
+  A.setBgm = function (on) {
+    if (!on) {
+      bgm.started = false;
+      try { if (bgm.cur) bgm.cur.pause(); } catch (e) {}
+    } else {
+      if (bgm.cur) {
+        bgm.started = true;
+        try { var pr = bgm.cur.play(); if (pr && pr.catch) pr.catch(function () { bgm.started = false; }); } catch (e) { bgm.started = false; }
+      } else A.startBgm();
+    }
   };
 
   /* ---------- 真实贴图清单（assets/ 下；加载完成前自动回退文字占位） ---------- */
@@ -153,7 +169,13 @@ var DG = typeof GameGlobal !== 'undefined' ? (GameGlobal.DG = GameGlobal.DG || {
     puzzle_p4: 'puzzle_p4.jpg', puzzle_p5: 'puzzle_p5.jpg', puzzle_p6: 'puzzle_p6.jpg',
     sk_default: 'sk_default.png', sk_lava: 'sk_lava.png', sk_ghost: 'sk_ghost.png',
     sk_goldpick: 'sk_goldpick.png', sk_lemon: 'sk_lemon.png', sk_starry: 'sk_starry.png',
-    sk_sakura: 'sk_sakura.png', sk_champ: 'sk_champ.png'
+    sk_sakura: 'sk_sakura.png', sk_champ: 'sk_champ.png',
+    pr_btn: 'pr_btn.png', pr_btn_h: 'pr_btn_h.png', pr_plate: 'pr_plate.png',
+    pr_snd_on: 'pr_snd_on.png', pr_snd_off: 'pr_snd_off.png',
+    pr_arrow_l: 'pr_arrow_l.png', pr_arrow_r: 'pr_arrow_r.png',
+    ic_shop: 'ic_shop.png', ic_box: 'ic_box.png', ic_book: 'ic_book.png',
+    ic_wheel: 'ic_wheel.png', ic_puzzle: 'ic_puzzle.png', ic_gym: 'ic_gym.png',
+    ic_music: 'ic_music.png', ic_music_off: 'ic_music_off.png'
   };
   A.preload = function () {
     for (var id in A.manifest) (function (key) {

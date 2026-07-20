@@ -32,6 +32,7 @@ var DG = typeof GameGlobal !== 'undefined' ? (GameGlobal.DG = GameGlobal.DG || {
   }
 
   function unlocked(id) { return DG.D.unlocks[id](DG.SAVE.d); }
+  var resetArm = 0; // 重置按钮二次确认计时
 
   DG.Main.scene('home', {
     enter: function () {
@@ -81,6 +82,20 @@ var DG = typeof GameGlobal !== 'undefined' ? (GameGlobal.DG = GameGlobal.DG || {
         { icon: 'ui_ticket', txt: '' + s.ticket }
       ]);
       DG.PAY.gemHotspot(20);
+      // 音乐/音效开关（右上角，音量固定30%）
+      if (!s.opt) s.opt = { bgm: 1, sfx: 1 };
+      if (UI.button(P.W - 130, by + 10, 56, 56, '', { color: '#3a4356' })) {
+        s.opt.bgm = s.opt.bgm ? 0 : 1;
+        DG.A.setBgm(!!s.opt.bgm);
+        DG.SAVE.save();
+      }
+      DG.A.draw(ctx, s.opt.bgm ? 'ic_music' : 'ic_music_off', P.W - 130 + 11, by + 21, 34, 34);
+      if (!s.opt.bgm) { ctx.strokeStyle = '#ff5a5a'; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(P.W - 122, by + 58); ctx.lineTo(P.W - 82, by + 18); ctx.stroke(); }
+      if (UI.button(P.W - 66, by + 10, 56, 56, '', { color: '#3a4356' })) {
+        s.opt.sfx = s.opt.sfx ? 0 : 1;
+        DG.SAVE.save();
+      }
+      DG.A.draw(ctx, s.opt.sfx ? 'pr_snd_on' : 'pr_snd_off', P.W - 66 + 11, by + 21, 34, 34);
       // 内容整体垂直居中（高屏不再顶部堆内容、底部留大片空地）
       var contentH = 208 + 128 + 128 + (unlocked('daily') ? 394 : 90) + 202;
       var pad = Math.max(0, Math.floor((P.H - by - contentH - 46) / 2));
@@ -190,14 +205,14 @@ var DG = typeof GameGlobal !== 'undefined' ? (GameGlobal.DG = GameGlobal.DG || {
         dy += 90;
       }
 
-      // 系统入口 3×2
+      // 系统入口 3×2（新图标包）
       var tabs = [
-        { id: 'shop', txt: '🛒 商店', lock: '完成第1局解锁' },
-        { id: 'box', txt: '🎁 盲盒', lock: '第3局或100m解锁' },
-        { id: 'codex', txt: '📖 图鉴', lock: '第4局或150m解锁' },
-        { id: 'wheel', txt: '🎡 转盘', lock: '第2天或250m解锁' },
-        { id: 'puzzle', txt: '🧩 拼图', lock: '第5局或350m解锁' },
-        { id: 'skin', txt: '💪 强化', lock: '完成拼图1或600m解锁' }
+        { id: 'shop', txt: '商店', icon: 'ic_shop', lock: '完成第1局解锁' },
+        { id: 'box', txt: '盲盒', icon: 'ic_box', lock: '第3局或100m解锁' },
+        { id: 'codex', txt: '图鉴', icon: 'ic_book', lock: '第4局或150m解锁' },
+        { id: 'wheel', txt: '转盘', icon: 'ic_wheel', lock: '第2天或250m解锁' },
+        { id: 'puzzle', txt: '拼图', icon: 'ic_puzzle', lock: '第5局或350m解锁' },
+        { id: 'skin', txt: '强化', icon: 'ic_gym', lock: '完成拼图1或600m解锁' }
       ];
       var bw = (P.W - 60 - 40) / 3, bh = 92;
       for (var t = 0; t < tabs.length; t++) {
@@ -207,16 +222,17 @@ var DG = typeof GameGlobal !== 'undefined' ? (GameGlobal.DG = GameGlobal.DG || {
         if (tabs[t].id === 'box' && s.boxkey > 0) badge = s.boxkey;
         if (tabs[t].id === 'wheel' && un && !s.daily.wheelFree) badge = '!';
         if (tabs[t].id === 'puzzle' && s.piece > 0) badge = s.piece;
-        if (UI.button(tx, ty, bw, bh, un ? tabs[t].txt : '🔒' + tabs[t].txt.slice(2), { color: un ? UI.C.panel2 : '#242a38', txtColor: un ? '#fff' : '#6a7288', fontSize: 26, badge: un ? badge : 0, sub: un ? null : tabs[t].lock, subColor: '#6a7288' })) {
+        if (UI.button(tx, ty, bw, bh, un ? tabs[t].txt : '🔒' + tabs[t].txt, { color: un ? UI.C.panel2 : '#3a4356', glyph: un ? tabs[t].icon : null, fontSize: 26, badge: un ? badge : 0, sub: un ? null : tabs[t].lock, subColor: '#6a7288' })) {
           if (un) DG.Main.go('meta', tabs[t].id);
           else DG.FX.text(tx + bw / 2, ty - 10, tabs[t].lock, { color: '#ff9f4a', size: 24 });
         }
       }
 
-      // debug: 重置
-      if (UI.button(P.W - 120, P.H - 50, 100, 36, '重置存档', { color: 'rgba(60,66,86,0.5)', txtColor: '#6a7288', fontSize: 18 })) {
-        DG.SAVE.wipe();
-        DG.Main.go('home');
+      // debug: 重置（二次确认防误触）
+      var armed = resetArm && Date.now() - resetArm < 2500;
+      if (UI.button(P.W - 150, P.H - 50, 130, 36, armed ? '再点一次确认!' : '重置存档', { color: armed ? '#8a3a3a' : 'rgba(60,66,86,0.5)', txtColor: armed ? '#fff' : '#6a7288', fontSize: 18 })) {
+        if (armed) { resetArm = 0; DG.SAVE.wipe(); DG.Main.go('home'); }
+        else resetArm = Date.now();
       }
       UI.label(20, P.H - 32, '原型版', { size: 18, color: '#5a6478' });
     }

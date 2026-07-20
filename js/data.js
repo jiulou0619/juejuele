@@ -393,7 +393,8 @@ var DG = typeof GameGlobal !== 'undefined' ? (GameGlobal.DG = GameGlobal.DG || {
     puzzleLast: 10,                                  // 拼图最后一片补齐
     pityKey: 48,                                     // 保底冲刺 星钻→券（冲刺8折；60=全经济唯一锚，唯二折扣=首充双倍+冲刺8折）
     pityKeyWindow: 5,
-    wishGem: 30                                      // 许愿矿灯星钻价（广告轨每日1次免费）
+    wishGem: 30,                                     // 许愿矿灯星钻价（广告轨每日1次免费）
+    wheelGem: 20                                     // 转盘星钻直转价
   };
   D.monthlyActive = function (s) { return s.monthlyUntil && U.todayKey() <= s.monthlyUntil; };
 
@@ -714,6 +715,7 @@ var DG = typeof GameGlobal !== 'undefined' ? (GameGlobal.DG = GameGlobal.DG || {
   D.defaultSave = function () {
     return {
       v: 1,
+      opt: { bgm: 1, sfx: 1 },                       // 音乐/音效开关（音量固定30%）
       coin: 0, gem: 0, boxkey: 0, dust: 0, piece: 0, ticket: 0, ssrTicket: 0,
       runCount: 0, cumM: 0, bestM: 0, bestScore: 0, days: 1, lastDay: 0, yesterM: 0,
       signDay: 0,             // 已签到天数(0~7)
