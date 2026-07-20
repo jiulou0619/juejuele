@@ -134,9 +134,11 @@ var DG = typeof GameGlobal !== 'undefined' ? (GameGlobal.DG = GameGlobal.DG || {
       ninePatch(ctx, vuImg, x, y, w, h, 66, Math.min(26, h * 0.42));
       ctx.globalAlpha = 1;
       var lightBtn = !opts.disabled && ['yellow', 'green', 'cream'].indexOf(vuVar) >= 0;
-      txtCol = opts.disabled ? 'rgba(236,224,214,0.5)' : (lightBtn ? '#33291f' : '#ece0d6');
-      subCol = opts.disabled ? 'rgba(236,224,214,0.45)' : (lightBtn ? 'rgba(51,41,31,0.72)' : 'rgba(236,224,214,0.78)');
-      dbl = opts.disabled ? null : (lightBtn ? 'rgba(255,255,255,0.3)' : 'rgba(0,0,0,0.45)'); // 底字提可读性
+      txtCol = opts.disabled ? 'rgba(236,224,214,0.5)' : (lightBtn ? '#2e2419' : '#ece0d6');
+      // 副标题用实色深棕：半透明压在暖砂底上笔画会糊
+      subCol = opts.disabled ? 'rgba(236,224,214,0.45)' : (lightBtn ? '#4a3a2a' : 'rgba(236,224,214,0.82)');
+      // 浅底按钮不叠底字（白影只会让笔画发虚），只有深底才需要
+      dbl = (opts.disabled || lightBtn) ? null : 'rgba(0,0,0,0.45)';
     } else if (prImg) { // Prinbles UNDER 橄榄石板（回退）
       if (opts.disabled) ctx.globalAlpha = 0.5;
       ninePatch(ctx, prImg, x, y, w, h, 24, Math.min(20, h * 0.35));
@@ -175,7 +177,9 @@ var DG = typeof GameGlobal !== 'undefined' ? (GameGlobal.DG = GameGlobal.DG || {
     }
     var fs = Math.max(opts.fontSize || Math.min(30, h * 0.42), 20);
     ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-    var ly = y + h / 2 + (opts.sub ? -fs * 0.4 : 0);
+    // 矢量按钮底部有一圈厚底唇，文字视觉中心要上移，否则副标题会压在底唇上
+    var midY = y + h / 2 - (vuImg ? h * 0.06 : 0);
+    var ly = midY + (opts.sub ? -fs * 0.42 : 0);
     ctx.font = 'bold ' + Math.floor(fs) + 'px Xiaolai, sans-serif';
     var lTok = label ? tokenize(label) : null;
     if (opts.glyph) {
@@ -195,14 +199,15 @@ var DG = typeof GameGlobal !== 'undefined' ? (GameGlobal.DG = GameGlobal.DG || {
       ctx.fillText(label, x + w / 2, ly);
     }
     if (opts.sub) {
-      var sfs = Math.floor(Math.max(fs * 0.72, 19));
+      var sfs = Math.floor(Math.max(fs * 0.74, 21));
       ctx.font = sfs + 'px Xiaolai, sans-serif';
+      var sy = midY + fs * 0.58;
       var sTok = tokenize(opts.sub);
-      if (sTok) { ctx.fillStyle = subCol; UI.richText(ctx, sTok, x + w / 2, y + h / 2 + fs * 0.55, sfs, 'center', dbl, subCol); }
+      if (sTok) { ctx.fillStyle = subCol; UI.richText(ctx, sTok, x + w / 2, sy, sfs, 'center', dbl, subCol); }
       else {
-        if (dbl) { ctx.fillStyle = dbl; ctx.fillText(opts.sub, x + w / 2, y + h / 2 + fs * 0.55 + 2, w - 16); }
+        if (dbl) { ctx.fillStyle = dbl; ctx.fillText(opts.sub, x + w / 2, sy + 2, w - 16); }
         ctx.fillStyle = subCol;
-        ctx.fillText(opts.sub, x + w / 2, y + h / 2 + fs * 0.55, w - 16);
+        ctx.fillText(opts.sub, x + w / 2, sy, w - 16);
       }
     }
     if (opts.badge) { // 暖红徽章（玫瑰红做小圆点会显糖果粉，这里单独用锈红）

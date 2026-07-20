@@ -230,7 +230,7 @@ var DG = typeof GameGlobal !== 'undefined' ? (GameGlobal.DG = GameGlobal.DG || {
           UI.label(54, gy + 16, g.txt, { size: 23, color: done ? '#4cd471' : '#dfe6f2', maxW: 420 });
           UI.bar(54, gy + 34, 420, 18, cur / g.target, done ? '#4cd471' : '#4aa3ff', cur + '/' + g.target);
           if (claimed) UI.label(P.W - 144, gy + 26, '✅', { size: 30, align: 'center' });
-          else if (UI.button(P.W - 234, gy + 2, 180, 50, done ? '领取' : '未完成', { fontSize: 21, disabled: !done, sub: done ? '🪙100 💎10' : null })) {
+          else if (UI.button(P.W - 240, gy - 4, 190, 64, done ? '领取' : '未完成', { fontSize: 23, disabled: !done, sub: done ? '🪙100 💎10' : null })) {
             s.daily.goalsClaimed.push(g.id);
             s.coin += 100; s.gem += 10;
             DG.FX.text(P.W - 140, gy + 20, '+100🪙 +10💎', { color: '#ffd76a', size: 26 });
