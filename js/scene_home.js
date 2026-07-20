@@ -98,7 +98,8 @@ var DG = typeof GameGlobal !== 'undefined' ? (GameGlobal.DG = GameGlobal.DG || {
       var bg = DG.A.images.bg_topsoil;
       if (bg) {
         ctx.drawImage(bg, -4, -4, P.W + 8, P.H + 8);
-        ctx.fillStyle = 'rgba(8,10,16,0.45)';
+        // 背景压暗+去饱和：暖木UI才浮得出来（休闲游戏惯用的"暗世界·亮界面"关系）
+        ctx.fillStyle = 'rgba(42,38,37,0.72)';
         ctx.fillRect(-4, -4, P.W + 8, P.H + 8);
       }
       // 声音设置弹层（模态：先画先吃输入，直接return）

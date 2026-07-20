@@ -20,7 +20,7 @@ var DG = typeof GameGlobal !== 'undefined' ? (GameGlobal.DG = GameGlobal.DG || {
     var img = A.images[id];
     if (img) { ctx.drawImage(img, x, y, w, h); return; } // 有真实贴图直接画（无需注册占位）
     var r = A.reg[id];
-    if (!r) { ctx.fillStyle = '#f0f'; ctx.fillRect(x, y, w, h); return; }
+    if (!r) return; // 图未加载完/弱网失败：静默跳过，别糊一屏品红占位
     if (r.shape !== 'none') {
       ctx.fillStyle = opts.color || r.color || '#555';
       if (r.shape === 'circle') {

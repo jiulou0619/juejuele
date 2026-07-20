@@ -9,11 +9,13 @@ var DG = typeof GameGlobal !== 'undefined' ? (GameGlobal.DG = GameGlobal.DG || {
     /* 配色「矿脉暖金 Warm Vein」：暖褐暗部与棕色地层同色系，明度拉开三档；
      * 正文/图形对比度全部过 WCAG（txt on panel 13.2:1，dim on panel 6.5:1，line 3.1:1）。
      * 注意：dim 不可直接压在背景图上（仅 2.9:1），必须落在 panel 或半透黑底之上。 */
+    /* 配色骨架取自指定色板：#909FAA 石板蓝 / #2A2625 暖炭 / #BFA390 暖砂 / #76859E 雾霾蓝 / #794F3B 赭棕。
+     * 语义色（绿/红/紫）按同等饱和度(~18%)从骨架派生，保证整体柔和统一。 */
     C: {
-      bg: '#1a130f', panel: '#2a211b', panel2: '#3a3027', line: '#826c54',
-      txt: '#f5ebdc', dim: '#b9a48c', gold: '#ffd15c', pri: '#f0a62e',
-      green: '#5fd79b', red: '#ff6e85', blue: '#5bc3f0', purple: '#c58cf7',
-      cream: '#efdcb6', dark: '#2a211b'
+      bg: '#2a2625', panel: '#413734', panel2: '#544842', line: '#8a7566',
+      txt: '#ece0d6', dim: '#909faa', gold: '#d8bb9e', pri: '#bfa390',
+      green: '#8ca084', red: '#a4685a', blue: '#76859e', purple: '#8a7e9e',
+      cream: '#bfa390', dark: '#2a2625', brown: '#794f3b', slate: '#909faa'
     },
     pointer: { down: false, x: 0, y: 0, downX: 0, downY: 0, moved: false },
     tap: null,           // 本帧点击 {x,y}，被控件消费后置 null
@@ -132,9 +134,9 @@ var DG = typeof GameGlobal !== 'undefined' ? (GameGlobal.DG = GameGlobal.DG || {
       ninePatch(ctx, vuImg, x, y, w, h, 66, Math.min(26, h * 0.42));
       ctx.globalAlpha = 1;
       var lightBtn = !opts.disabled && ['yellow', 'green', 'cream'].indexOf(vuVar) >= 0;
-      txtCol = opts.disabled ? 'rgba(255,255,255,0.55)' : (lightBtn ? '#2a1d05' : '#fff6e2');
-      subCol = opts.disabled ? 'rgba(255,255,255,0.5)' : (lightBtn ? 'rgba(42,29,5,0.75)' : 'rgba(255,246,226,0.8)');
-      dbl = opts.disabled ? null : (lightBtn ? 'rgba(255,255,255,0.35)' : 'rgba(0,0,0,0.5)'); // 底字提可读性
+      txtCol = opts.disabled ? 'rgba(236,224,214,0.5)' : (lightBtn ? '#33291f' : '#ece0d6');
+      subCol = opts.disabled ? 'rgba(236,224,214,0.45)' : (lightBtn ? 'rgba(51,41,31,0.72)' : 'rgba(236,224,214,0.78)');
+      dbl = opts.disabled ? null : (lightBtn ? 'rgba(255,255,255,0.3)' : 'rgba(0,0,0,0.45)'); // 底字提可读性
     } else if (prImg) { // Prinbles UNDER 橄榄石板（回退）
       if (opts.disabled) ctx.globalAlpha = 0.5;
       ninePatch(ctx, prImg, x, y, w, h, 24, Math.min(20, h * 0.35));
@@ -204,7 +206,7 @@ var DG = typeof GameGlobal !== 'undefined' ? (GameGlobal.DG = GameGlobal.DG || {
       }
     }
     if (opts.badge) { // 暖红徽章（玫瑰红做小圆点会显糖果粉，这里单独用锈红）
-      ctx.fillStyle = '#d9452f';
+      ctx.fillStyle = '#a4685a';
       ctx.beginPath(); ctx.arc(x + w - 8, y + 8, 13, 0, Math.PI * 2); ctx.fill();
       ctx.strokeStyle = 'rgba(0,0,0,0.55)'; ctx.lineWidth = 2.5;
       ctx.beginPath(); ctx.arc(x + w - 8, y + 8, 13, 0, Math.PI * 2); ctx.stroke();
