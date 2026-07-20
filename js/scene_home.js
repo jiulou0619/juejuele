@@ -82,7 +82,7 @@ var DG = typeof GameGlobal !== 'undefined' ? (GameGlobal.DG = GameGlobal.DG || {
       ]);
       DG.PAY.gemHotspot(20);
       // 内容整体垂直居中（高屏不再顶部堆内容、底部留大片空地）
-      var contentH = 208 + 116 + 96 + (unlocked('daily') ? 320 : 90) + 202;
+      var contentH = 208 + 128 + 128 + (unlocked('daily') ? 394 : 90) + 202;
       var pad = Math.max(0, Math.floor((P.H - by - contentH - 46) / 2));
       // 标题（Logo 图，缺图回退文字）
       var logo = DG.A.images.logo;
@@ -100,32 +100,35 @@ var DG = typeof GameGlobal !== 'undefined' ? (GameGlobal.DG = GameGlobal.DG || {
         DG.Main.go('run');
       }
 
-      // 今日矿情 + 每日挑战
-      var my = sy + 116;
+      // 今日矿情 + 每日挑战：两张等高卡片，不再散排文字
+      var my = sy + 128;
       var mod = DG.D.todayMod();
-      UI.label(36, my + 24, '📻 今日矿情', { size: 22, bold: true, color: UI.C.blue });
-      UI.label(36, my + 52, mod.name + ' · ' + mod.desc, { size: 20, color: UI.C.dim, maxW: 380 });
-      UI.label(36, my + 78, '明日 · ' + DG.D.modOfKey(U.dayKeyOffset(1)).name, { size: 18, color: '#5a6478' });
+      var cardW = (P.W - 80) / 2;
+      UI.panel(30, my, cardW, 108);
+      UI.label(52, my + 28, '📻 今日矿情', { size: 21, bold: true, color: UI.C.blue });
+      UI.label(52, my + 56, mod.name, { size: 22, bold: true, color: '#fff', maxW: cardW - 44 });
+      UI.label(52, my + 84, mod.desc, { size: 17, color: '#8a92a8', maxW: cardW - 44 });
       if (s.runCount >= 3) {
         var ch = DG.D.todayChallenge();
-        if (UI.button(P.W - 300, my + 8, 280, 76, '⚔️ 每日挑战', {
+        if (UI.button(50 + cardW, my, cardW, 108, '⚔️ 每日挑战', {
           color: s.daily.chDone ? UI.C.panel2 : '#8a3a3a', txtColor: '#fff', fontSize: 26,
-          sub: s.daily.chDone ? '今日最深 ' + s.daily.chBest + 'm' : ch[0].name + '+' + ch[1].name + ' → 💎40',
+          sub: s.daily.chDone ? '今日最深 ' + s.daily.chBest + 'm' : '双修饰硬局 → 💎40',
           badge: s.daily.chDone ? 0 : '!'
         })) DG.Main.go('run', { challenge: true });
       } else {
-        UI.label(P.W - 160, my + 40, '⚔️ 挑战·3局后解锁', { size: 20, align: 'center', color: '#5a6478' });
+        UI.panel(50 + cardW, my, cardW, 108);
+        UI.label(50 + cardW + cardW / 2, my + 54, '⚔️ 挑战 · 3局后解锁', { size: 20, align: 'center', color: '#5a6478' });
       }
 
       // 每日面板
-      var dy = my + 96;
+      var dy = my + 128;
       if (unlocked('daily')) {
-        UI.panel(30, dy, P.W - 60, 300);
-        UI.label(54, dy + 36, '📅 每日', { size: 28, bold: true, color: '#fff' });
+        UI.panel(30, dy, P.W - 60, 372);
+        UI.label(54, dy + 44, '📅 每日', { size: 28, bold: true, color: '#fff' });
         // 签到
         var canSign = !s.daily.signed;
         var signIdx = s.signDay % 7;
-        if (UI.button(P.W - 260, dy + 12, 210, 48, canSign ? '签到 D' + (signIdx + 1) : '已签到', { fontSize: 22, disabled: !canSign, sub: canSign ? DG.D.signin7[signIdx].txt : null })) {
+        if (UI.button(P.W - 288, dy + 16, 234, 60, canSign ? '签到 D' + (signIdx + 1) : '✅ 已签到', { fontSize: 23, disabled: !canSign, sub: canSign ? DG.D.signin7[signIdx].txt : null })) {
           s.daily.signed = true;
           var give = DG.D.signin7[signIdx];
           DG.Run.grantGive(give.give);
@@ -133,8 +136,8 @@ var DG = typeof GameGlobal !== 'undefined' ? (GameGlobal.DG = GameGlobal.DG || {
           DG.FX.banner('📅 签到 ' + give.txt, { color: '#8fd0ff', size: 40 });
           DG.SAVE.save();
         }
-        // 三条目标
-        var gy = dy + 72;
+        // 三条目标：文字+进度条一列，按钮右侧垂直居中，行距拉开
+        var gy = dy + 92;
         var doneAll = true;
         var bestOT = null; // 矿工加班候选：进度最高的未完成目标(≥70%)
         for (var i = 0; i < s.daily.goals.length; i++) {
@@ -146,31 +149,31 @@ var DG = typeof GameGlobal !== 'undefined' ? (GameGlobal.DG = GameGlobal.DG || {
           if (!done && cur / g.target >= 0.7 && (!bestOT || cur / g.target > bestOT.ratio)) bestOT = { g: g, cur: cur, ratio: cur / g.target };
           var claimed = s.daily.goalsClaimed.indexOf(g.id) >= 0;
           if (!claimed) doneAll = false;
-          UI.label(54, gy + 20, g.txt, { size: 24, color: done ? '#4cd471' : '#dfe6f2' });
-          UI.bar(54, gy + 38, 380, 16, cur / g.target, done ? '#4cd471' : '#4aa3ff', cur + '/' + g.target);
-          if (claimed) UI.label(P.W - 150, gy + 28, '✅', { size: 28, align: 'center' });
-          else if (UI.button(P.W - 220, gy + 6, 160, 46, done ? '领取' : '未完成', { fontSize: 20, disabled: !done, sub: done ? '🪙100 💎10' : null })) {
+          UI.label(54, gy + 16, g.txt, { size: 23, color: done ? '#4cd471' : '#dfe6f2', maxW: 420 });
+          UI.bar(54, gy + 34, 420, 18, cur / g.target, done ? '#4cd471' : '#4aa3ff', cur + '/' + g.target);
+          if (claimed) UI.label(P.W - 144, gy + 26, '✅', { size: 30, align: 'center' });
+          else if (UI.button(P.W - 234, gy + 2, 180, 50, done ? '领取' : '未完成', { fontSize: 21, disabled: !done, sub: done ? '🪙100 💎10' : null })) {
             s.daily.goalsClaimed.push(g.id);
             s.coin += 100; s.gem += 10;
             DG.FX.text(P.W - 140, gy + 20, '+100🪙 +10💎', { color: '#ffd76a', size: 26 });
             DG.SAVE.save();
           }
-          gy += 66;
+          gy += 76;
         }
         // 全完成→盲盒券
         if (s.daily.goalsClaimed.length >= 3 && !s.daily.allClaimed) {
-          if (UI.button(54, gy + 2, P.W - 168, 46, '🎉 全部完成! 领取盲盒券×1', { fontSize: 22 })) {
+          if (UI.button(54, gy, P.W - 168, 48, '🎉 全部完成! 领取盲盒券×1', { fontSize: 22 })) {
             s.daily.allClaimed = true;
             s.boxkey++;
-            DG.FX.banner('🎟️ 盲盒券 +1', { color: '#ffd76a', size: 44 });
+            DG.FX.banner('盲盒券 +1', { color: '#ffd76a', size: 44 });
             DG.SAVE.save();
           }
         } else {
-          UI.label(54, gy + 24, '完成全部3条 → 盲盒券×1 🎟️', { size: 20, color: UI.C.dim });
+          UI.label(54, gy + 22, s.daily.allClaimed ? '✅ 今日3条已全部完成' : '完成全部3条 → 额外盲盒券×1', { size: 20, color: UI.C.dim });
         }
         // 矿工加班：就差一口气的目标，看广告补满（日限1）
         if (bestOT && !s.daily.overtimeUsed) {
-          if (UI.button(40, dy + 306, P.W - 80, 50, '⏰ 加班一班: 看广告补满『' + bestOT.g.txt + '』', { fontSize: 21, sub: bestOT.cur + '/' + bestOT.g.target + ' · 就差一口气 · 日限1(模拟)' })) {
+          if (UI.button(40, dy + 382, P.W - 80, 52, '⏰ 加班一班: 看广告补满『' + bestOT.g.txt + '』', { fontSize: 21, sub: bestOT.cur + '/' + bestOT.g.target + ' · 就差一口气 · 日限1(模拟)' })) {
             (function (g2) {
               DG.D.adStub('overtime', function () {
                 s.daily.stats[g2.key] = g2.target;
@@ -179,8 +182,8 @@ var DG = typeof GameGlobal !== 'undefined' ? (GameGlobal.DG = GameGlobal.DG || {
               });
             })(bestOT.g);
           }
-          dy += 380;
-        } else dy += 320;
+          dy += 456;
+        } else dy += 394;
       } else {
         UI.panel(30, dy, P.W - 60, 70);
         UI.label(P.W / 2, dy + 35, '📅 每日目标 · 完成第2局解锁', { size: 24, align: 'center', color: UI.C.dim });
