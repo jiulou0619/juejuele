@@ -253,7 +253,7 @@ var DG = typeof GameGlobal !== 'undefined' ? (GameGlobal.DG = GameGlobal.DG || {
   /* ---------- 通用 UI 资源 ---------- */
   A.def('ui_coin', { glyph: '🪙', shape: 'none', art: '金币图标 64x64，卡通描边风', size: '64x64' });
   A.def('ui_gem', { glyph: '💎', shape: 'none', art: '钻石(高级货币)图标 64x64', size: '64x64' });
-  A.def('ui_key', { glyph: '🔑', shape: 'none', art: '盲盒钥匙(盲盒券)图标 64x64', size: '64x64' });
+  A.def('ui_key', { glyph: '🔑', shape: 'none', art: '盲盒钥匙图标 64x64', size: '64x64' });
   A.def('ui_energy', { glyph: '⛏️', shape: 'none', art: '镐力(体力)图标 64x64', size: '64x64' });
   A.def('ui_ticket', { glyph: '🎟️', shape: 'none', art: '转盘券图标 64x64', size: '64x64' });
   A.def('ui_puzzle', { glyph: '🧩', shape: 'none', art: '拼图碎片图标 64x64', size: '64x64' });

@@ -142,7 +142,7 @@ var DG = typeof GameGlobal !== 'undefined' ? (GameGlobal.DG = GameGlobal.DG || {
       var by = UI.currencyBar([
         { icon: 'ui_coin', txt: U.fmt(s.coin), tip: '金币：商店升级 / 局前补给' },
         { icon: 'ui_gem', txt: U.fmt(s.gem), tip: '星钻：开盲盒 / 复活 / 转盘' },
-        { icon: 'ui_key', txt: '' + s.boxkey, tip: '盲盒券：免费开1个盲盒' },
+        { icon: 'ui_key', txt: '' + s.boxkey, tip: '盲盒钥匙：免费开1个盲盒' },
         { icon: 'ui_ticket', txt: '' + s.ticket, tip: '转盘券：免费转1次转盘' }
       ]);
       DG.PAY.gemHotspot(20);
@@ -252,16 +252,16 @@ var DG = typeof GameGlobal !== 'undefined' ? (GameGlobal.DG = GameGlobal.DG || {
           }
           gy += 76;
         }
-        // 全完成→盲盒券
+        // 全完成→盲盒钥匙
         if (s.daily.goalsClaimed.length >= 3 && !s.daily.allClaimed) {
-          if (UI.button(54, gy, P.W - 168, 48, '🎉 全部完成! 领取盲盒券×1', { fontSize: 22 })) {
+          if (UI.button(54, gy, P.W - 168, 48, '🎉 全部完成! 领取盲盒钥匙×1', { fontSize: 22 })) {
             s.daily.allClaimed = true;
             s.boxkey++;
-            DG.FX.banner('盲盒券 +1', { color: '#ffd76a', size: 44 });
+            DG.FX.banner('盲盒钥匙 +1', { color: '#ffd76a', size: 44 });
             DG.SAVE.save();
           }
         } else {
-          UI.label(54, gy + 22, s.daily.allClaimed ? '✅ 今日3条已全部完成' : '完成全部3条 → 额外盲盒券×1', { size: 20, color: UI.C.dim });
+          UI.label(54, gy + 22, s.daily.allClaimed ? '✅ 今日3条已全部完成' : '完成全部3条 → 额外盲盒钥匙×1', { size: 20, color: UI.C.dim });
         }
         // 矿工加班：就差一口气的目标，看广告补满（日限1）
         if (bestOT && !s.daily.overtimeUsed) {

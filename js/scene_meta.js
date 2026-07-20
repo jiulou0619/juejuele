@@ -239,8 +239,8 @@ var DG = typeof GameGlobal !== 'undefined' ? (GameGlobal.DG = GameGlobal.DG || {
       var pityRemain = D.pity.ssr - s.pityBox;
       var hot = pityRemain <= 3;
       UI.bar(40, top + 4, P.W - 80, 26, s.pityBox / D.pity.ssr, hot ? '#ffb02e' : UI.C.purple, 'SSR保底 ' + s.pityBox + '/' + D.pity.ssr + (hot ? ' 🔥' : ''));
-      UI.label(P.W / 2, top + 48, '🎟️×' + s.boxkey + ' · N58% R30% SR10% SSR2% · 25抽硬保底', { size: 19, align: 'center', color: UI.C.dim });
-      if (UI.button(40, top + 68, (P.W - 100) / 2, 70, '开1个 (🎟️1)', { fontSize: 28, disabled: s.boxkey < 1 || busy })) { s.boxkey--; startCase(rollBox()); }
+      UI.label(P.W / 2, top + 48, '🔑×' + s.boxkey + ' · N58% R30% SR10% SSR2% · 25抽硬保底', { size: 19, align: 'center', color: UI.C.dim });
+      if (UI.button(40, top + 68, (P.W - 100) / 2, 70, '开1个 (🔑1)', { fontSize: 28, disabled: s.boxkey < 1 || busy })) { s.boxkey--; startCase(rollBox()); }
       if (UI.button(60 + (P.W - 100) / 2, top + 68, (P.W - 100) / 2, 70, '开1个 (💎' + D.boxCost.gem + ')', { color: '#5a4a8f', txtColor: '#fff', fontSize: 28, disabled: busy })) {
         if (s.gem >= D.boxCost.gem) { s.gem -= D.boxCost.gem; startCase(rollBox()); }
         else DG.PAY.show('box', D.boxCost.gem - s.gem); // 钻石不足→直接开收银台
@@ -341,7 +341,7 @@ var DG = typeof GameGlobal !== 'undefined' ? (GameGlobal.DG = GameGlobal.DG || {
         UI.label(P.W / 2, byy + 290, '【' + it.set.name + '】' + it.name, { size: 30, bold: true, align: 'center', color: '#fff' });
         UI.label(P.W / 2, byy + 334, boxResult.isNew ? ('词条: ' + it.set.statName + '+' + rc.pct * (it.set.stat === 'durMax' ? 2 : 1) + (it.set.unit || '')) : ('分解 → ✨星尘+' + boxResult.dust), { size: 24, align: 'center', color: UI.C.dim });
         if (boxResult.multi) UI.label(P.W / 2, byy + 364, boxResult.multi, { size: 20, align: 'center', color: '#8fd0ff' });
-        if (UI.button(bx + 30, byy + bh - 162, (bw - 80) / 2, 60, '再开 (🎟️' + s.boxkey + ')', { fontSize: 23, disabled: s.boxkey < 1 })) { s.boxkey--; boxResult = null; startCase(rollBox()); }
+        if (UI.button(bx + 30, byy + bh - 162, (bw - 80) / 2, 60, '再开 (🔑' + s.boxkey + ')', { fontSize: 23, disabled: s.boxkey < 1 })) { s.boxkey--; boxResult = null; startCase(rollBox()); }
         if (UI.button(bx + bw / 2 + 10, byy + bh - 162, (bw - 80) / 2, 60, '再开 (💎' + D.boxCost.gem + ')', { color: '#5a4a8f', txtColor: '#fff', fontSize: 23 })) {
           if (s.gem >= D.boxCost.gem) { s.gem -= D.boxCost.gem; boxResult = null; startCase(rollBox()); }
           else DG.PAY.show('box', D.boxCost.gem - s.gem);

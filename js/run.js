@@ -739,7 +739,7 @@ var DG = typeof GameGlobal !== 'undefined' ? (GameGlobal.DG = GameGlobal.DG || {
     var granted = [];
     if (R.codexFound && R.codexFound.length) granted.push('📖 新发现×' + R.codexFound.length + ': ' + R.codexFound.slice(0, 3).join('、') + (R.codexFound.length > 3 ? '…' : ''));
     if (gotDigTicket) granted.push('今日累挖600m → 🎫转盘券×1');
-    // 每日挑战奖励（每日一次；挑战局挖到100m追加盲盒券）
+    // 每日挑战奖励（每日一次；挑战局挖到100m追加盲盒钥匙）
     if (R.challenge) {
       if (R.m > (s.daily.chBest || 0)) s.daily.chBest = R.m;
       if (!s.daily.chDone) {
@@ -811,7 +811,7 @@ var DG = typeof GameGlobal !== 'undefined' ? (GameGlobal.DG = GameGlobal.DG || {
     var out = [];
     if (g.coin) out.push('🪙' + g.coin);
     if (g.gem) out.push('💎' + g.gem);
-    if (g.boxkey) out.push('🎟️' + g.boxkey);
+    if (g.boxkey) out.push('🔑' + g.boxkey);
     if (g.dust) out.push('✨' + g.dust);
     if (g.piece) out.push('🧩' + g.piece);
     if (g.ticket) out.push('🎫' + g.ticket);

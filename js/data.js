@@ -416,7 +416,7 @@ var DG = typeof GameGlobal !== 'undefined' ? (GameGlobal.DG = GameGlobal.DG || {
   D.currencies = {
     coin: { name: '金币', icon: 'ui_coin' },
     gem: { name: '星钻', icon: 'ui_gem' },
-    boxkey: { name: '盲盒券', icon: 'ui_key' },
+    boxkey: { name: '盲盒钥匙', icon: 'ui_key' },
     dust: { name: '星尘', icon: 'ui_dust' },
     piece: { name: '拼图碎片', icon: 'ui_puzzle' },
     ticket: { name: '转盘券', icon: 'ui_ticket' }
@@ -482,21 +482,21 @@ var DG = typeof GameGlobal !== 'undefined' ? (GameGlobal.DG = GameGlobal.DG || {
   D.wheel = [
     { w: 30, txt: '金币×200', glyph: '🪙', img: 'wp_coin', give: { coin: 200 } },
     { w: 10, txt: '星钻×20', glyph: '💎', img: 'wp_gem', give: { gem: 20 } },
-    { w: 10, txt: '盲盒券', glyph: '🎟️', img: 'wp_boxkey', give: { boxkey: 1 } },
+    { w: 10, txt: '盲盒钥匙', glyph: '🔑', img: 'wp_boxkey', give: { boxkey: 1 } },
     { w: 12, txt: '拼图碎片', glyph: '🧩', img: 'wp_puzzle', give: { piece: 1 } },
     { w: 15, txt: '星尘×40', glyph: '✨', img: 'wp_dust', give: { dust: 40 } },
     { w: 6,  txt: '转盘券', glyph: '🎫', img: 'wp_ticket', give: { ticket: 1 } },
     { w: 12, txt: '金币×600', glyph: '💰', img: 'wp_gold', give: { coin: 600 } },
-    { w: 5,  txt: '大奖 盲盒券×3+星钻60', glyph: '👑', img: 'wp_jackpot', give: { boxkey: 3, gem: 60 } }
+    { w: 5,  txt: '大奖 盲盒钥匙×3+星钻60', glyph: '👑', img: 'wp_jackpot', give: { boxkey: 3, gem: 60 } }
   ];
   D.ticketCoinCost = 800; // 金币购转盘券（日限1）
 
   /* ================= 拼图：6幅×9片 ================= */
   D.puzzles = [
     { id: 'p1', name: '地心熔炉', pic: ['🌋', '🔥', '⛰️', '🔥', '🌋', '🔥', '⛰️', '🔥', '🌋'], reward: { skin: 'lava', coin: 500 }, rtxt: '熔岩皮肤+500金币' },
-    { id: 'p2', name: '星空矿脉', pic: ['🌌', '⭐', '🌙', '⭐', '🌌', '⭐', '🌙', '⭐', '🌌'], reward: { gem: 150, boxkey: 1 }, rtxt: '星钻150+盲盒券1' },
+    { id: 'p2', name: '星空矿脉', pic: ['🌌', '⭐', '🌙', '⭐', '🌌', '⭐', '🌙', '⭐', '🌌'], reward: { gem: 150, boxkey: 1 }, rtxt: '星钻150+盲盒钥匙1' },
     { id: 'p3', name: '幽灵矿洞', pic: ['👻', '🕯️', '⛏️', '🕯️', '👻', '🕯️', '⛏️', '🕯️', '👻'], reward: { skin: 'ghost' }, rtxt: '幽灵皮肤' },
-    { id: 'p4', name: '机械之城', pic: ['⚙️', '🔩', '🤖', '🔩', '⚙️', '🔩', '🤖', '🔩', '⚙️'], reward: { dust: 300, boxkey: 2 }, rtxt: '星尘300+盲盒券2' },
+    { id: 'p4', name: '机械之城', pic: ['⚙️', '🔩', '🤖', '🔩', '⚙️', '🔩', '🤖', '🔩', '⚙️'], reward: { dust: 300, boxkey: 2 }, rtxt: '星尘300+盲盒钥匙2' },
     { id: 'p5', name: '黄金王座', pic: ['👑', '🪙', '💰', '🪙', '👑', '🪙', '💰', '🪙', '👑'], reward: { skin: 'goldpick' }, rtxt: '黄金皮肤' },
     { id: 'p6', name: '远古之秘', pic: ['🦖', '🦴', '🗿', '🦴', '🦖', '🦴', '🗿', '🦴', '🦖'], reward: { ssrTicket: 1 }, rtxt: 'SSR自选券' }
   ];
@@ -628,9 +628,9 @@ var DG = typeof GameGlobal !== 'undefined' ? (GameGlobal.DG = GameGlobal.DG || {
   ];
   D.signin7 = [
     { txt: '金币×200', give: { coin: 200 } }, { txt: '星钻×30', give: { gem: 30 } },
-    { txt: '转盘券×2', give: { ticket: 2 } }, { txt: '盲盒券×1', give: { boxkey: 1 } },
+    { txt: '转盘券×2', give: { ticket: 2 } }, { txt: '盲盒钥匙×1', give: { boxkey: 1 } },
     { txt: '星尘×100', give: { dust: 100 } }, { txt: '星钻×50', give: { gem: 50 } },
-    { txt: '柠檬镐+盲盒券×3', give: { boxkey: 3, skin: 'lemon' } }
+    { txt: '柠檬镐+盲盒钥匙×3', give: { boxkey: 3, skin: 'lemon' } }
   ];
   D.milesCum = [ // 累计深度
     { m: 100, txt: '累计100m', give: { gem: 20 } }, { m: 300, txt: '累计300m', give: { boxkey: 1 } },
