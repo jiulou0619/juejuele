@@ -397,10 +397,7 @@ var DG = typeof GameGlobal !== 'undefined' ? (GameGlobal.DG = GameGlobal.DG || {
     dustShop: function (ctx) {
       var s = DG.SAVE.d, D = DG.D, P2 = P;
       UI.dim(0.86);
-      var x = 26, w = P.W - 52, y = P.safeTop + 30, h = P.H - y - 46;
-      UI.panel(x, y, w, h);
-      UI.label(P.W / 2, y + 46, '星 尘 兑 换 所', { size: 34, bold: true, align: 'center', color: UI.C.gold });
-      UI.label(P.W / 2, y + 84, '✨ ' + U.fmt(s.dust) + '  ·  本周还可兑换 ' + Math.max(0, dustWeekLeft(s)) + ' 件', { size: 22, align: 'center', color: UI.C.dim });
+      var x = 26, w = P.W - 52;
 
       // ---- 二次确认层 ----
       if (dustPick) {
@@ -418,66 +415,110 @@ var DG = typeof GameGlobal !== 'undefined' ? (GameGlobal.DG = GameGlobal.DG || {
         return;
       }
 
-      var listTop = y + 108, listH = h - 108 - 84;
-      var rowH = 150, secH = 190;
-      var contentH = D.sets.length * rowH + secH + 40;
-      UI.scroll('dustshop', x + 10, listTop, w - 20, listH, contentH, function () {
-        var cy2 = listTop;
-        // ---- 定向补件：每套一行，只列未拥有的 N/R/SR ----
-        for (var si = 0; si < D.sets.length; si++) {
-          var set = D.sets[si], ownN = setOwnedCount(set);
-          UI.label(x + 32, cy2 + 24, set.name + '  ' + ownN + '/8', { size: 23, bold: true, color: ownN >= 2 ? UI.C.txt : UI.C.dim });
-          if (ownN < 2) {
-            UI.label(x + w - 32, cy2 + 24, '需先拥有2件', { size: 19, align: 'right', color: UI.C.dim });
-          }
-          var bx2 = x + 30, n = 0;
-          for (var i = 0; i < 8; i++) {
-            var id = set.id + '_' + i;
-            if (s.col[id]) continue;
-            var rar = D.rarOfIdx(i);
-            if (rar === 'SSR') continue;           // SSR不上架定向
-            if (n >= 4) break;
-            var cost = D.dust.price[rar];
-            var bought = !!s.dustBuy[id];
-            var can = ownN >= 2 && !bought && dustWeekLeft(s) > 0 && s.dust >= cost;
-            var bw2 = (w - 76) / 4;
-            (function (set2, i2, id2, rar2, cost2) {
-              if (UI.button(bx2, cy2 + 44, bw2 - 8, 88, bought ? '已兑' : ('✨' + cost2), {
-                color: can ? null : UI.C.panel2, fontSize: 21, disabled: !can,
-                sub: bought ? null : rar2
-              })) {
-                dustPick = {
-                  title: '【' + set2.name + '】' + set2.items[i2][0],
-                  glyph: set2.items[i2][1], cost: cost2,
-                  sub: rar2 + ' · 词条 ' + set2.statName + '+' + D.rarCfg[rar2].pct + (set2.unit || ''),
-                  go: function () {
-                    s.dust -= cost2; s.col[id2] = 1; s.dustBuy[id2] = 1; s.dustWeekN = (s.dustWeekN || 0) + 1;
-                    checkSetDone(set2); D.calcBonuses(); DG.SAVE.save();
-                    boxResult = { item: { id: id2, name: set2.items[i2][0], glyph: set2.items[i2][1], rar: rar2, set: set2 }, isNew: true, dust: 0, rar: rar2 };
-                    dustOpen = false;
-                    DG.A.sfx('box_open', { vibrate: true, strong: true });
-                  }
-                };
-              }
-            })(set, i, id, rar, cost);
-            bx2 += bw2; n++;
-          }
-          if (!n) UI.label(x + 32, cy2 + 84, '✅ 本套 N/R/SR 已收齐', { size: 20, color: UI.C.green });
-          cy2 += rowH;
+      // 预扫：每套的可兑件与状态（决定行高：有货=卡片区块，无货=一行小字）
+      var rows = [];
+      for (var si = 0; si < D.sets.length; si++) {
+        var set = D.sets[si], ownN = setOwnedCount(set), items = [];
+        for (var i = 0; i < 8; i++) {
+          var id = set.id + '_' + i;
+          if (s.col[id]) continue;
+          var rar = D.rarOfIdx(i);
+          if (rar === 'SSR') continue;             // SSR不上架定向
+          items.push({ set: set, i: i, id: id, rar: rar, cost: D.dust.price[rar], bought: !!s.dustBuy[id] });
         }
-        // ---- SSR自选券 + 钻头淬火 ----
-        var ssrLeft = D.dust.ssrCap - (s.dustSsrN || 0);
-        UI.label(x + 32, cy2 + 22, 'SSR自选券  (终身限' + D.dust.ssrCap + '次，剩' + Math.max(0, ssrLeft) + ')', { size: 23, bold: true, color: UI.C.txt });
-        if (UI.button(x + 30, cy2 + 42, w - 60, 62, '✨' + D.dust.ssrTicket + ' 换 SSR自选券', { fontSize: 24, disabled: ssrLeft <= 0 || s.dust < D.dust.ssrTicket })) {
+        rows.push({ set: set, own: ownN, items: items,
+          state: ownN < 2 ? 'locked' : (items.length ? 'open' : 'done') });
+      }
+      var CARD_H = 172, BLOCK_H = 48 + CARD_H + 22, LINE_H = 44;
+      var contentH = 12;
+      for (var ri = 0; ri < rows.length; ri++) contentH += rows[ri].state === 'open' ? BLOCK_H : LINE_H;
+      contentH += 24 + 96 + 96 + 30; // 分隔 + SSR行 + 淬火行
+
+      // 面板贴内容自适应高度并垂直居中；内容超高时内部滚动
+      var need = 108 + contentH + 84;
+      var maxH = P.H - P.safeTop - 76;
+      var h = Math.min(need, maxH);
+      var y = Math.max(P.safeTop + 30, Math.floor((P.H - h) / 2));
+      UI.panel(x, y, w, h);
+      UI.label(P.W / 2, y + 46, '星 尘 兑 换 所', { size: 34, bold: true, align: 'center', color: UI.C.gold });
+      UI.label(P.W / 2, y + 84, '✨ ' + U.fmt(s.dust) + '  ·  本周还可兑换 ' + Math.max(0, dustWeekLeft(s)) + ' 件', { size: 22, align: 'center', color: UI.C.dim });
+      var listTop = y + 108, listH = h - 108 - 84;
+
+      UI.scroll('dustshop', x + 10, listTop, w - 20, listH, contentH, function () {
+        var cy2 = listTop + 12;
+        for (var ri = 0; ri < rows.length; ri++) {
+          var row = rows[ri], set = row.set;
+          if (row.state !== 'open') { // 收齐/未解锁：一行小字带走，不占屏
+            UI.glyph(ctx, set.icon, x + 44, cy2 + 20, 26);
+            UI.label(x + 66, cy2 + 20, set.name + '  ' + row.own + '/8', { size: 21, color: UI.C.dim });
+            UI.label(x + w - 34, cy2 + 20, row.state === 'done' ? '✅ 可兑部分已收齐' : '🔒 集齐2件解锁兑换', { size: 19, align: 'right', color: row.state === 'done' ? UI.C.green : UI.C.dim });
+            cy2 += LINE_H;
+            continue;
+          }
+          // 套头：图标+名字+进度
+          UI.glyph(ctx, set.icon, x + 46, cy2 + 22, 30);
+          UI.label(x + 72, cy2 + 22, set.name, { size: 24, bold: true, color: UI.C.txt });
+          UI.label(x + w - 34, cy2 + 22, row.own + '/8 · ' + set.statName + '套装', { size: 19, align: 'right', color: UI.C.dim });
+          // 藏品卡片：图标+名字+稀有度+价格钮
+          var cw2 = (w - 76) / 4, showN = Math.min(4, row.items.length);
+          for (var k = 0; k < showN; k++) {
+            var it = row.items[k];
+            var cx2 = x + 30 + k * cw2, ct = cy2 + 48;
+            UI.slot(cx2, ct, cw2 - 10, CARD_H, it.bought ? 0.45 : 1);
+            ctx.strokeStyle = D.rarCfg[it.rar].color; ctx.lineWidth = 2.5;
+            U.rr(ctx, cx2 + 2, ct + 2, cw2 - 14, CARD_H - 4, 10); ctx.stroke();
+            ctx.globalAlpha = it.bought ? 0.4 : 1;
+            UI.glyph(ctx, it.set.items[it.i][1], cx2 + (cw2 - 10) / 2, ct + 42, 54);
+            ctx.globalAlpha = 1;
+            UI.label(cx2 + (cw2 - 10) / 2, ct + 84, it.set.items[it.i][0], { size: 18, bold: true, align: 'center', color: UI.C.txt, maxW: cw2 - 22 });
+            UI.label(cx2 + (cw2 - 10) / 2, ct + 108, it.rar, { size: 16, align: 'center', color: D.rarCfg[it.rar].color });
+            if (it.bought) {
+              UI.label(cx2 + (cw2 - 10) / 2, ct + 142, '✅ 已兑', { size: 19, align: 'center', color: UI.C.green });
+            } else {
+              var can = dustWeekLeft(s) > 0 && s.dust >= it.cost;
+              (function (it2) {
+                if (UI.button(cx2 + 8, ct + 122, cw2 - 26, 42, '✨' + it2.cost, { color: can ? null : UI.C.panel2, fontSize: 19, disabled: !can })) {
+                  dustPick = {
+                    title: '【' + it2.set.name + '】' + it2.set.items[it2.i][0],
+                    glyph: it2.set.items[it2.i][1], cost: it2.cost,
+                    sub: it2.rar + ' · 词条 ' + it2.set.statName + '+' + D.rarCfg[it2.rar].pct + (it2.set.unit || ''),
+                    go: function () {
+                      s.dust -= it2.cost; s.col[it2.id] = 1; s.dustBuy[it2.id] = 1; s.dustWeekN = (s.dustWeekN || 0) + 1;
+                      checkSetDone(it2.set); D.calcBonuses(); DG.SAVE.save();
+                      boxResult = { item: { id: it2.id, name: it2.set.items[it2.i][0], glyph: it2.set.items[it2.i][1], rar: it2.rar, set: it2.set }, isNew: true, dust: 0, rar: it2.rar };
+                      dustOpen = false;
+                      DG.A.sfx('box_open', { vibrate: true, strong: true });
+                    }
+                  };
+                }
+              })(it);
+            }
+          }
+          cy2 += BLOCK_H;
+        }
+        // ---- 分隔线 + 常青兑换 ----
+        ctx.strokeStyle = UI.C.line; ctx.lineWidth = 2;
+        ctx.beginPath(); ctx.moveTo(x + 40, cy2 + 10); ctx.lineTo(x + w - 40, cy2 + 10); ctx.stroke();
+        cy2 += 24;
+        // SSR自选券行：图标+说明左，按钮右
+        var ssrLeft = Math.max(0, D.dust.ssrCap - (s.dustSsrN || 0));
+        UI.glyph(ctx, '👑', x + 58, cy2 + 44, 44);
+        UI.label(x + 96, cy2 + 30, 'SSR自选券', { size: 23, bold: true, color: UI.C.txt });
+        UI.label(x + 96, cy2 + 60, '任选1件未拥有SSR · 终身限' + D.dust.ssrCap + '次 剩' + ssrLeft, { size: 18, color: UI.C.dim, maxW: w - 340 });
+        if (UI.button(x + w - 232, cy2 + 16, 200, 58, '✨' + D.dust.ssrTicket, { fontSize: 22, disabled: ssrLeft <= 0 || s.dust < D.dust.ssrTicket })) {
           dustPick = {
             title: 'SSR 自选券', glyph: '👑', cost: D.dust.ssrTicket,
             sub: '使用后从未拥有的SSR中获得1件',
             go: function () { s.dust -= D.dust.ssrTicket; s.ssrTicket = (s.ssrTicket || 0) + 1; s.dustSsrN = (s.dustSsrN || 0) + 1; DG.SAVE.save(); DG.FX.banner('✨ SSR自选券 ×1', { color: UI.C.gold, size: 44, pri: true }); }
           };
         }
+        cy2 += 96;
+        // 钻头淬火行：图标+进度条左，按钮右
         var lv = s.drillLv || 0, dp = D.dust.drill;
-        UI.label(x + 32, cy2 + 130, '钻头淬火  Lv.' + lv + '/' + dp.length + '  (耐久上限+2/级)', { size: 23, bold: true, color: UI.C.txt });
-        if (UI.button(x + 30, cy2 + 150, w - 60, 62, lv >= dp.length ? 'MAX' : ('✨' + dp[lv] + ' 升到 Lv.' + (lv + 1)), { fontSize: 24, disabled: lv >= dp.length || s.dust < dp[lv] })) {
+        UI.glyph(ctx, '⛏', x + 58, cy2 + 44, 44);
+        UI.label(x + 96, cy2 + 30, '钻头淬火  Lv.' + lv + '/' + dp.length, { size: 23, bold: true, color: UI.C.txt });
+        UI.bar(x + 96, cy2 + 50, w - 350, 16, lv / dp.length, UI.C.green, '耐久上限 +' + lv * 2);
+        if (UI.button(x + w - 232, cy2 + 16, 200, 58, lv >= dp.length ? 'MAX' : '✨' + dp[lv], { fontSize: 22, disabled: lv >= dp.length || s.dust < dp[lv] })) {
           s.dust -= dp[lv]; s.drillLv = lv + 1; D.calcBonuses(); DG.SAVE.save();
           DG.A.sfx('buy', { vibrate: true });
           DG.FX.banner('⛏ 钻头淬火 Lv.' + s.drillLv, { color: UI.C.green, size: 42 });
