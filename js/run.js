@@ -63,6 +63,7 @@ var DG = typeof GameGlobal !== 'undefined' ? (GameGlobal.DG = GameGlobal.DG || {
     R.score = 0;
     R.combo = 0; R.comboT = 0; R.comboPeak = 0;
     R.fever = 0; R.feverT = 0; R.feverCount = 0;
+    R.fossilN = 0; R.healN = 0;                 // 每局化石上限 / 回血递减计数
     R.itemsUsed = 0; R.oreGot = 0; R.blocksCleared = 0;
     R.perks = []; R.perkChoices = null; R.pendingPerks = 0;
     R.tagSetDone = {};              // 已激活的流派羁绊
@@ -138,9 +139,12 @@ var DG = typeof GameGlobal !== 'undefined' ? (GameGlobal.DG = GameGlobal.DG || {
     DG.SAVE.save();
   }
 
-  function feverGain(n) {
+  function feverGain(n, viaSpecial) {
     var B = DG.D.bonusCache;
     var g = (n + Math.max(0, n - 4) * 2) * (R.mods.feverGain || 1) * (1 + (B.feverChargePct || 0) / 100) * (R.dayFeverMul || 1);
+    g = Math.min(g, 30);                        // 单次事件充能封顶：TNT连锁一炮灌满→永动机
+    if (viaSpecial) g *= 0.5;                   // 道具清块半充能（道具本身免耐久，不能再白送狂热）
+    g /= (1 + R.feverCount * 0.35);             // 每爆发一次，下次更难充满，狂热无法无缝续杯
     if (!R.mods.feverOn) {
       R.fever += g;
       if (R.fever >= T.feverMax) startFever();
@@ -215,14 +219,14 @@ var DG = typeof GameGlobal !== 'undefined' ? (GameGlobal.DG = GameGlobal.DG || {
         R.blocksCleared += e.n;
         s.daily.stats.blocks += e.n;
         codexFind(e.color, e.cx, e.cy);
-        var base = (10 + R.m * 0.2) * e.n * (1 + 0.15 * Math.max(0, e.n - 3)) * R.comboMul() * (R.mods.feverOn ? 2 : 1);
+        var base = (10 + Math.min(400, R.m) * 0.2) * e.n * (1 + 0.15 * Math.max(0, e.n - 3)) * R.comboMul() * (R.mods.feverOn ? 2 : 1);
         R.score += Math.round(base);
         // 暴击判定提前：暴击与得分合并成一条飘字
         var crit = !R.mods.feverOn && e.n >= 3 && Math.random() < T.critP;
         if (crit) {
           R.score += Math.round(base * 2);
           R.critCount++;
-          gainCoin(2 * e.n, e.cx, e.cy, 'crit');
+          gainCoin(2 * Math.min(30, e.n), e.cx, e.cy, 'crit');
           DG.FX.text(e.cx, e.cy, '💥暴击 +' + U.fmt(Math.round(base * 3)), { color: '#ffd76a', size: 44 });
           DG.FX.shake(6, 0.12);
           DG.A.sfx('pop_l', { vibrate: true });
@@ -237,7 +241,7 @@ var DG = typeof GameGlobal !== 'undefined' ? (GameGlobal.DG = GameGlobal.DG || {
         }
         else DG.A.sfx('pop_s');
         R.burstAcc += e.n; if (R.burstT <= 0) R.burstT = 0.9;
-        feverGain(e.n);
+        feverGain(e.n, viaSpecial);
         // 强化：≥8块消除15%掉道具
         if (R.mods.dropOn8 && e.n >= 8 && Math.random() < 0.15) R.pendingSpecials.push(U.pick(['rocket', 'bomb', 'drill']));
       }
@@ -257,6 +261,9 @@ var DG = typeof GameGlobal !== 'undefined' ? (GameGlobal.DG = GameGlobal.DG || {
       else if (e.ev === 'fossil') {
         gainCoin(30, e.x, e.y, 'fossil');
         codexFind('fossil', e.x, e.y);
+        // 每局化石出土上限：超过后只给金币，不再刷屏/攒星尘
+        R.fossilN++;
+        if (R.fossilN > 8) { gainCoin(60, e.x, e.y, 'fossil'); continue; }
         // 化石收藏：按深度roll品质（绿/紫/橙）
         var fo = DG.D.rollFossil(R.m);
         var ft = DG.D.fossilTiers[fo.tier];
@@ -301,7 +308,7 @@ var DG = typeof GameGlobal !== 'undefined' ? (GameGlobal.DG = GameGlobal.DG || {
           : (e.sp === 'bomb' || e.sp === 'bigbomb' || e.sp === 'nuke' || e.sp === 'bigcross') ? 'fx_blast' : 'fx_pop_m';
         DG.FX.spr(e.cx, e.cy, fxId, e.sp === 'nuke' ? 420 : e.sp === 'bigbomb' ? 320 : 220, 0.5);
         R.burstAcc += e.n; if (R.burstT <= 0) R.burstT = 0.9;
-        feverGain(Math.min(8, e.n));
+        feverGain(Math.min(8, e.n), true);
       }
       else if (e.ev === 'event') { triggerEvent(e.id); }
       else if (e.ev === 'puzzle_piece') {
@@ -330,15 +337,16 @@ var DG = typeof GameGlobal !== 'undefined' ? (GameGlobal.DG = GameGlobal.DG || {
     }
     var group = G.groupAt(r, c);
     var min = R.mods.feverOn ? 2 : T.matchMin;
+    var deepCost = Math.floor(R.m / 150); // 越深每铲越费镐：150m起+1，无尽段自然收敛
     if (cell.kind === 'color' && group.length >= min) {
       var res2 = G.popGroup(r, c);
-      if (!R.mods.feverOn) spendDur(T.durCostPop);
+      if (!R.mods.feverOn) spendDur(T.durCostPop + deepCost);
       R.handleEvents(res2.evs, false);
       var p = G.cellXY(r, c);
       comboUp(p.x + G.cell / 2, p.y);
     } else {
       // 单敲硬掘：保底永不卡死
-      var cost = cell.kind === 'block' && cell.t === 'rock' ? T.durCostRock : (R.mods.digCost || T.durCostDig);
+      var cost = (cell.kind === 'block' && cell.t === 'rock' ? T.durCostRock : (R.mods.digCost || T.durCostDig)) + deepCost;
       if (R.mods.feverOn) cost = 0;
       var res3 = G.digSingle(r, c);
       spendDur(cost);
@@ -386,6 +394,13 @@ var DG = typeof GameGlobal !== 'undefined' ? (GameGlobal.DG = GameGlobal.DG || {
     if (R.dur <= R.durMax * 0.25) DG.A.sfx('hurt');
   }
 
+  /* 局内回血递减：里程碑/过层/修镐共用计数，越到后期回得越少，耐久始终是真正的沙漏 */
+  function runHeal(base) {
+    var h = Math.max(2, Math.round(base * Math.pow(0.85, R.healN)));
+    R.healN++;
+    return h;
+  }
+
   function afterAction() {
     updateDepth();
     placePendingSpecials();
@@ -417,7 +432,7 @@ var DG = typeof GameGlobal !== 'undefined' ? (GameGlobal.DG = GameGlobal.DG || {
     R.m = m;
     // 每50m里程碑（100m起同时累积撤离倍率 = push-your-luck）
     if (Math.floor(m / 50) > Math.floor(R.lastMile / 50)) {
-      var heal = R.mods.mileHeal || T.mileHeal;
+      var heal = runHeal(R.mods.mileHeal || T.mileHeal);
       R.dur = Math.min(R.durMax, R.dur + heal);
       var mileTxt = Math.floor(m / 50) * 50 + 'm · ⛏+' + heal;
       if (m >= 100) {
@@ -436,7 +451,7 @@ var DG = typeof GameGlobal !== 'undefined' ? (GameGlobal.DG = GameGlobal.DG || {
     if (idx > R.stratum || deepPerk) {
       R.stratum = deepPerk ? R.stratum + 1 : idx;
       var st = DG.D.stratumAt(m);
-      R.dur = Math.min(R.durMax, R.dur + T.layerHeal);
+      R.dur = Math.min(R.durMax, R.dur + runHeal(T.layerHeal));
       DG.FX.banner('⬇️ ' + st.name + ' ⬇️', { color: '#ffd76a', size: 64, life: 1.6, pri: true });
       DG.A.sfx('layer', { vibrate: true, strong: true });
       // 入层三选一（若当前有事件浮层则排队，防状态互相覆盖）
@@ -458,8 +473,9 @@ var DG = typeof GameGlobal !== 'undefined' ? (GameGlobal.DG = GameGlobal.DG || {
   R.pickPerk = function (i) {
     // -1=都不选修镐；-2=第四格诱惑位(界面层已完成扣费/广告)
     if (i === -1) {
-      R.dur = Math.min(R.durMax, R.dur + T.perkSkipHeal);
-      DG.FX.text(DG.P.W / 2, DG.P.H * 0.4, '🔧 ⛏+' + T.perkSkipHeal, { color: '#8fd0ff', size: 36 });
+      var skipHeal = runHeal(T.perkSkipHeal);
+      R.dur = Math.min(R.durMax, R.dur + skipHeal);
+      DG.FX.text(DG.P.W / 2, DG.P.H * 0.4, '🔧 ⛏+' + skipHeal, { color: '#8fd0ff', size: 36 });
       R.perkChoices = null; R.perk4 = null;
       drainOverlays();
       return;
@@ -658,7 +674,9 @@ var DG = typeof GameGlobal !== 'undefined' ? (GameGlobal.DG = GameGlobal.DG || {
   R.buildSettle = function (exitVoluntary) {
     var s = DG.SAVE.d, B = DG.D.calcBonuses();
     var bonusPct = (B.coinPct || 0) / 100;
-    var depthCoin = Math.round(R.m * 2 * (1 + (B.depthPct || 0) / 100) * (R.dayDepthMul || 1));
+    // 深度奖励：500m内线性，之后开方衰减（防无尽段金币爆炸）
+    var depthBase = R.m <= 500 ? R.m * 2 : 1000 + Math.round(Math.sqrt(R.m - 500) * 20);
+    var depthCoin = Math.round(depthBase * (1 + (B.depthPct || 0) / 100) * (R.dayDepthMul || 1));
     var comboCoin = Math.min(50, R.comboPeak) * 2; // 连击结算封顶
     var raw = R.coins + depthCoin + comboCoin;
     // 满载而归：主动撤离才吃撤离倍率；耐久耗尽只拿基础值（错失奖励而非惩罚）
