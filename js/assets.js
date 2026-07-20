@@ -217,7 +217,7 @@ var DG = typeof GameGlobal !== 'undefined' ? (GameGlobal.DG = GameGlobal.DG || {
     sk_default: 'sk_default.png', sk_lava: 'sk_lava.png', sk_ghost: 'sk_ghost.png',
     sk_goldpick: 'sk_goldpick.png', sk_lemon: 'sk_lemon.png', sk_starry: 'sk_starry.png',
     sk_sakura: 'sk_sakura.png', sk_champ: 'sk_champ.png',
-    vu_panel: 'vu_panel.png', vu_slot: 'vu_slot.png', vu_barbase: 'vu_barbase.png',
+    vu_panel: 'vu_panel.png', vu_slot: 'vu_slot.png', vu_barbase: 'vu_barbase.png', vu_note: 'vu_note.png',
     vu_button_yellow: 'vu_button_yellow.png', vu_button_green: 'vu_button_green.png',
     vu_button_red: 'vu_button_red.png', vu_button_purple: 'vu_button_purple.png',
     vu_button_blue: 'vu_button_blue.png', vu_button_cream: 'vu_button_cream.png',

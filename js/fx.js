@@ -130,11 +130,25 @@ var DG = typeof GameGlobal !== 'undefined' ? (GameGlobal.DG = GameGlobal.DG || {
       var kk = b.t / b.life;
       var scale = kk < 0.25 ? U.easeOutBack(kk / 0.25) : 1;
       ctx.globalAlpha = kk > 0.7 ? 1 - (kk - 0.7) / 0.3 : 1;
-      ctx.font = 'bold ' + Math.floor(b.size * scale) + 'px Xiaolai, sans-serif';
-      if (FX.lowQ) { ctx.fillStyle = 'rgba(0,0,0,0.7)'; ctx.fillText(b.txt, DG.P.W / 2, b.y + 3); }
-      else { ctx.strokeStyle = 'rgba(0,0,0,0.7)'; ctx.lineWidth = 8; ctx.strokeText(b.txt, DG.P.W / 2, b.y); }
-      ctx.fillStyle = b.color;
-      ctx.fillText(b.txt, DG.P.W / 2, b.y);
+      // 字号先按屏宽收敛：长文案在窄屏上必须整句可见，不能溢出屏幕
+      var maxW = DG.P.W - 64;
+      var fs = Math.floor(b.size * scale);
+      ctx.font = 'bold ' + fs + 'px Xiaolai, sans-serif';
+      var bw = ctx.measureText(b.txt).width;
+      if (bw > maxW) {
+        fs = Math.max(22, Math.floor(fs * maxW / bw));
+        ctx.font = 'bold ' + fs + 'px Xiaolai, sans-serif';
+      }
+      var toks = DG.UI && DG.UI.tokenize ? DG.UI.tokenize(b.txt) : null;
+      if (toks) { // 含图标：走内联图标渲染，同样居中且不溢出
+        ctx.fillStyle = b.color;
+        DG.UI.richText(ctx, toks, DG.P.W / 2, b.y, fs, 'center', 'rgba(0,0,0,0.7)', null, maxW);
+      } else {
+        if (FX.lowQ) { ctx.fillStyle = 'rgba(0,0,0,0.7)'; ctx.fillText(b.txt, DG.P.W / 2, b.y + 3, maxW); }
+        else { ctx.strokeStyle = 'rgba(0,0,0,0.7)'; ctx.lineWidth = 8; ctx.strokeText(b.txt, DG.P.W / 2, b.y, maxW); }
+        ctx.fillStyle = b.color;
+        ctx.fillText(b.txt, DG.P.W / 2, b.y, maxW);
+      }
       ctx.globalAlpha = 1;
     }
     ctx.globalAlpha = 1;

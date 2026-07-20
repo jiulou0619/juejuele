@@ -143,7 +143,7 @@ var DG = typeof GameGlobal !== 'undefined' ? (GameGlobal.DG = GameGlobal.DG || {
       if (UI.button(P.W - 66, by + 10, 56, 56, '', { color: '#3a4356' })) setOpen = true;
       DG.A.draw(ctx, sfxMute ? 'pr_snd_off' : 'pr_snd_on', P.W - 66 + 11, by + 21, 34, 34);
       // 内容整体垂直居中（高屏不再顶部堆内容、底部留大片空地）
-      var contentH = 56 + (s.runCount >= 2 ? 196 : 128) + 128 + (unlocked('daily') ? 394 : 90) + 202;
+      var contentH = 56 + (s.runCount >= 2 ? 196 : 128) + 212 + (unlocked('daily') ? 394 : 90) + 202;
       var pad = Math.max(0, Math.floor((P.H - by - contentH - 46) / 2));
       UI.label(P.W / 2, by + pad + 30, '最深 ' + s.bestM + 'm · 累计 ' + U.fmt(s.cumM) + 'm · ' + s.runCount + '局', { size: 24, align: 'center', color: UI.C.dim });
 
@@ -173,25 +173,33 @@ var DG = typeof GameGlobal !== 'undefined' ? (GameGlobal.DG = GameGlobal.DG || {
       // 今日矿情 + 每日挑战：两张等高卡片，不再散排文字
       var my = sy + (showSup ? 196 : 128);
       var mod = DG.D.todayMod();
-      var cardW = (P.W - 80) / 2;
-      UI.panel(30, my, cardW, 108);
-      UI.label(52, my + 28, '📻 今日矿情', { size: 21, bold: true, color: UI.C.blue });
-      UI.label(52, my + 56, mod.name, { size: 22, bold: true, color: '#fff', maxW: cardW - 44 });
-      UI.label(52, my + 84, mod.desc, { size: 17, color: '#8a92a8', maxW: cardW - 44 });
+      var cardW = (P.W - 80) / 2, cardH = 192;
+      // 今日矿情：记事本贴图（顶部环扣带写标题，纸面写内容）
+      var band = UI.img3v('vu_note', 30, my, cardW, cardH, 205, 46);
+      if (band) {
+        UI.label(30 + cardW / 2, my + band * 0.62, '今日矿情', { size: 23, bold: true, align: 'center', color: '#5a3d14', maxW: cardW - 40 });
+        UI.label(30 + cardW / 2, my + band + 32, mod.name, { size: 24, bold: true, align: 'center', color: '#4a3524', maxW: cardW - 36 });
+        UI.wrapText(50, my + band + 54, mod.desc, cardW - 40, { size: 20, color: '#6b5540' });
+      } else {
+        UI.panel(30, my, cardW, cardH);
+        UI.label(52, my + 34, '📻 今日矿情', { size: 21, bold: true, color: UI.C.blue });
+        UI.label(52, my + 72, mod.name, { size: 22, bold: true, color: '#fff', maxW: cardW - 44 });
+        UI.wrapText(52, my + 96, mod.desc, cardW - 44, { size: 20, color: UI.C.dim });
+      }
       if (s.runCount >= 3) {
         var ch = DG.D.todayChallenge();
-        if (UI.button(50 + cardW, my, cardW, 108, '⚔️ 每日挑战', {
+        if (UI.button(50 + cardW, my, cardW, cardH, '⚔️ 每日挑战', {
           color: s.daily.chDone ? UI.C.panel2 : '#8a3a3a', txtColor: '#fff', fontSize: 26,
           sub: s.daily.chDone ? '今日最深 ' + s.daily.chBest + 'm' : '双修饰硬局 → 💎40',
           badge: s.daily.chDone ? 0 : '!'
         })) DG.Main.go('run', { challenge: true });
       } else {
-        UI.panel(50 + cardW, my, cardW, 108);
-        UI.label(50 + cardW + cardW / 2, my + 54, '⚔️ 挑战 · 3局后解锁', { size: 20, align: 'center', color: '#5a6478' });
+        UI.panel(50 + cardW, my, cardW, cardH);
+        UI.label(50 + cardW + cardW / 2, my + cardH / 2, '⚔️ 挑战 · 3局后解锁', { size: 20, align: 'center', color: UI.C.dim, maxW: cardW - 30 });
       }
 
       // 每日面板
-      var dy = my + 128;
+      var dy = my + cardH + 20;
       if (unlocked('daily')) {
         UI.panel(30, dy, P.W - 60, 372);
         UI.label(54, dy + 44, '📅 每日', { size: 28, bold: true, color: '#fff' });

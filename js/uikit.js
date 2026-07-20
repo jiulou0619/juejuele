@@ -239,6 +239,21 @@ var DG = typeof GameGlobal !== 'undefined' ? (GameGlobal.DG = GameGlobal.DG || {
     ctx.drawImage(img, s, s, iw - 2 * s, ih - 2 * s, x + d, y + d, w - 2 * d, h - 2 * d);
   }
 
+  /* 竖向三切片：顶部装饰带按宽度等比、中段拉伸、底边固定。
+   * 给"记事本"这类顶部有环扣、不能被九宫格拉变形的贴图用。返回顶带高度。 */
+  UI.img3v = function (id, x, y, w, h, srcTop, srcBot) {
+    var img = DG.A.images[id];
+    if (!img) return 0;
+    var ctx = P.ctx, iw = img.width, ih = img.height;
+    var k = w / iw;
+    var dTop = Math.round(srcTop * k), dBot = Math.round(srcBot * k);
+    if (dTop + dBot > h - 8) { var sc = (h - 8) / (dTop + dBot); dTop = Math.floor(dTop * sc); dBot = Math.floor(dBot * sc); }
+    ctx.drawImage(img, 0, 0, iw, srcTop, x, y, w, dTop);
+    ctx.drawImage(img, 0, srcTop, iw, ih - srcTop - srcBot, x, y + dTop, w, h - dTop - dBot);
+    ctx.drawImage(img, 0, ih - srcBot, iw, srcBot, x, y + h - dBot, w, dBot);
+    return dTop;
+  };
+
   /* 公开的九宫格绘制（pixel=true 关闭平滑保持像素感） */
   UI.img9 = function (id, x, y, w, h, s, d, pixel, alpha) {
     var img = DG.A.images[id];
@@ -342,9 +357,18 @@ var DG = typeof GameGlobal !== 'undefined' ? (GameGlobal.DG = GameGlobal.DG || {
     return res;
   }
   /* 带内联图标地绘制一行文字（字体/颜色由调用方先设好） */
-  UI.richText = function (ctx, toks, x, y, fsz, align, strokeCol, iconTint) {
+  UI.richText = function (ctx, toks, x, y, fsz, align, strokeCol, iconTint, maxW) {
     var isz = Math.round(fsz * 1.06), gap = Math.round(fsz * 0.12), i, w = 0;
     for (i = 0; i < toks.length; i++) w += toks[i].i ? isz + gap : ctx.measureText(toks[i].t).width;
+    if (maxW && w > maxW) { // 窄屏收敛：整体缩字号重排，保证一句话完整可见
+      var k = maxW / w;
+      fsz = Math.max(18, Math.floor(fsz * k));
+      isz = Math.round(fsz * 1.06); gap = Math.round(fsz * 0.12);
+      var bold = ctx.font.indexOf('bold') === 0;
+      ctx.font = (bold ? 'bold ' : '') + fsz + 'px Xiaolai, sans-serif';
+      w = 0;
+      for (i = 0; i < toks.length; i++) w += toks[i].i ? isz + gap : ctx.measureText(toks[i].t).width;
+    }
     var cx = align === 'center' ? x - w / 2 : align === 'right' ? x - w : x;
     var oldAlign = ctx.textAlign, oldFill = ctx.fillStyle;
     ctx.textAlign = 'left';
@@ -384,9 +408,9 @@ var DG = typeof GameGlobal !== 'undefined' ? (GameGlobal.DG = GameGlobal.DG || {
     ctx.textAlign = opts.align || 'left';
     ctx.textBaseline = opts.base || 'middle';
     var toks = txt == null ? null : tokenize('' + txt);
-    if (toks) { // 含emoji → 走图标内联渲染
+    if (toks) { // 含emoji → 走图标内联渲染（maxW 时整体缩放，不裁字）
       ctx.fillStyle = opts.color || UI.C.txt;
-      UI.richText(ctx, toks, x, y, fsz, opts.align || 'left', opts.stroke ? 'rgba(0,0,0,0.75)' : null);
+      UI.richText(ctx, toks, x, y, fsz, opts.align || 'left', opts.stroke ? 'rgba(0,0,0,0.75)' : null, null, opts.maxW);
       return;
     }
     if (opts.stroke) {
