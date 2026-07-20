@@ -9,6 +9,8 @@ var DG = typeof GameGlobal !== 'undefined' ? (GameGlobal.DG = GameGlobal.DG || {
   var settleT = 0;          // 结算数字滚动
   var idleT = 0;            // 发呆计时：超时脉冲提示最大可消组
   var hintCells = null;     // 提示组
+  var hintMsg = null;       // 引导文案（画进底部狂热条槽位，不挡棋盘）
+  var offerRef = null, offerOpen = false; // 事件卡默认收起成小胸针，点开才展开
   var recordShown = false;  // 本局破纪录横幅只出一次
   var hotStreak = 0;        // 趁热打铁：连点"再来一局"计数（会话内，不写档）
   var mergeArmT = null;     // FTUE合并教学起始时间
@@ -47,6 +49,7 @@ var DG = typeof GameGlobal !== 'undefined' ? (GameGlobal.DG = GameGlobal.DG || {
     /* 新手引导：跟着棋盘状态走的四步软引导，零文字墙 */
     ftueTick: function (ctx) {
       var s = DG.SAVE.d, R = DG.Run, G = DG.Grid;
+      hintMsg = null;
       if (s.ftue >= 4 || R.challenge) return;
       if (s.ftue === 3 && s.codex.merge) { s.ftue = 4; DG.SAVE.save(); return; } // 老档迁移
       // 首Fever硬保证：75s还没Fever就"矿脉能量暴走"（包装成运气不是补课）
@@ -58,7 +61,7 @@ var DG = typeof GameGlobal !== 'undefined' ? (GameGlobal.DG = GameGlobal.DG || {
       if (s.ftue === 0) {
         if (R.blocksCleared > 0) { s.ftue = 1; DG.SAVE.save(); }
         else {
-          msg = '👆 点击 3个以上相连的同色方块 开挖!';
+          msg = '点击 3个以上相连的同色方块 开挖!';
           if (!hintCells) hintCells = this.findBestGroup();
         }
       }
@@ -74,7 +77,7 @@ var DG = typeof GameGlobal !== 'undefined' ? (GameGlobal.DG = GameGlobal.DG || {
       if (s.ftue === 2) {
         if (R.itemsUsed > 0) { s.ftue = 3; DG.SAVE.save(); }
         else {
-          msg = '👇 点道具引爆试试!';
+          msg = '点道具引爆试试!';
           var pulse = 0.5 + 0.4 * Math.sin(Date.now() / 160);
           ctx.strokeStyle = 'rgba(143,208,255,' + pulse + ')';
           ctx.lineWidth = 6;
@@ -97,7 +100,7 @@ var DG = typeof GameGlobal !== 'undefined' ? (GameGlobal.DG = GameGlobal.DG || {
           if (cl3 && cl3.kind === 'special') sps.push({ r: r3, c: c3 });
         }
         if (sps.length >= 2) {
-          msg = '🧪 拖一个道具到另一个上 = 合并大招!';
+          msg = '拖一个道具到另一个上 = 合并大招!';
           var a = G.cellXY(sps[0].r, sps[0].c), b = G.cellXY(sps[1].r, sps[1].c);
           ctx.save();
           ctx.setLineDash([8, 8]);
@@ -123,12 +126,7 @@ var DG = typeof GameGlobal !== 'undefined' ? (GameGlobal.DG = GameGlobal.DG || {
           }
         }
       }
-      if (R.offer) msg = null; // 悬浮事件卡占用同一区域时引导让位
-      if (msg) { // 提示带在底部面板上方，不遮挡棋盘首行
-        var byy = P.H - botH - 62;
-        UI.panel(40, byy, P.W - 80, 56, { color: 'rgba(20,26,38,0.92)', borderColor: '#4aa3ff' });
-        UI.label(P.W / 2, byy + 28, msg, { size: 24, bold: true, align: 'center', color: '#8fd0ff', maxW: P.W - 100 });
-      }
+      hintMsg = msg; // 画在底部狂热条槽位（bottomPanel负责渲染），完全不挡棋盘
     },
 
     /* 结算屏钩子：给玩家两条"马上再来一局"的理由 */
@@ -253,15 +251,24 @@ var DG = typeof GameGlobal !== 'undefined' ? (GameGlobal.DG = GameGlobal.DG || {
       else if (R.state === 'settle') this.settleOverlay(ctx, dt);
     },
 
-    /* 悬浮事件卡：不暂停游戏，限时存在，边挖边选 */
+    /* 悬浮事件卡：不暂停游戏，限时存在。默认收起成小胸针（不挡棋盘），点开才展开 */
     offerCard: function (ctx) {
       var R = DG.Run, o = R.offer;
       var w = P.W - 40, x = 20;
+      if (o !== offerRef) { offerRef = o; offerOpen = false; }
+      if (!offerOpen) {
+        var pw = 264, ph = 52, py = P.H - botH - ph - 10;
+        var isM = o.id === 'merchant';
+        if (UI.button(20, py, pw, ph, isM ? '🦫 商人来了 · 点开' : '❓ 赌石摊 · 点开', { color: '#3a4356', fontSize: 21, badge: '!' })) offerOpen = true;
+        UI.bar(24, py + ph + 2, pw - 8, 6, o.t / o.max, isM ? '#b678ff' : '#ff9f4a');
+        return;
+      }
       if (o.id === 'merchant') {
         var h = 128, y = P.H - botH - h - 14;
         UI.panel(x, y, w, h, { color: 'rgba(14,18,28,0.9)', borderColor: '#b678ff', r: 14 });
         UI.label(x + 18, y + 24, '🦫 流浪商人路过…', { size: 22, bold: true, color: '#d8c8f0' });
-        UI.label(x + w - 18, y + 24, '🪙' + R.coins, { size: 20, align: 'right', color: UI.C.gold });
+        if (UI.button(x + w - 60, y + 8, 48, 36, '▾', { color: '#3a4356', fontSize: 20 })) { offerOpen = false; return; }
+        UI.label(x + w - 76, y + 26, '🪙' + R.coins, { size: 20, align: 'right', color: UI.C.gold });
         var bw = (w - 48) / 3;
         for (var i = 0; i < o.offers.length; i++) {
           var it = o.offers[i], bx = x + 12 + i * (bw + 12);
@@ -274,7 +281,8 @@ var DG = typeof GameGlobal !== 'undefined' ? (GameGlobal.DG = GameGlobal.DG || {
         UI.panel(x, y2, w, h2, { color: 'rgba(28,17,22,0.9)', borderColor: '#ff9f4a', r: 14 });
         UI.label(x + 18, y2 + 30, '❓ 赌石摊 · 原石×' + o.stones, { size: 24, bold: true, color: '#ffd76a' });
         UI.label(x + 18, y2 + 60, '半数废石 · 也可能一夜暴富', { size: 16, color: '#c8a890' });
-        if (UI.button(x + w - 192, y2 + 16, 174, 52, '砸! 🪙40', { fontSize: 24, disabled: R.coins < 40 })) DG.Run.offerGamble();
+        if (UI.button(x + w - 250, y2 + 16, 174, 52, '砸! 🪙40', { fontSize: 24, disabled: R.coins < 40 })) DG.Run.offerGamble();
+        if (UI.button(x + w - 66, y2 + 16, 48, 52, '▾', { color: '#3a4356', fontSize: 20 })) { offerOpen = false; return; }
         UI.bar(x + 12, y2 + h2 - 14, w - 24, 8, o.t / o.max, '#ff9f4a');
       }
     },
@@ -325,7 +333,7 @@ var DG = typeof GameGlobal !== 'undefined' ? (GameGlobal.DG = GameGlobal.DG || {
       }
       // 点击（悬浮事件卡区域让位给卡上按钮）
       var lowLimit = P.H - botH;
-      if (R.offer) lowLimit -= (R.offer.id === 'merchant' ? 156 : 120);
+      if (R.offer) lowLimit -= offerOpen ? (R.offer.id === 'merchant' ? 156 : 120) : 70;
       if (UI.tap && UI.tap.y > P.safeTop + hudH && UI.tap.y < lowLimit) {
         var t = G.hitCell(UI.tap.x, UI.tap.y);
         if (t) { R.tapAt(t.r, t.c); UI.tap = null; }
@@ -337,11 +345,11 @@ var DG = typeof GameGlobal !== 'undefined' ? (GameGlobal.DG = GameGlobal.DG || {
       var C = UI.C;
       // 悬浮HUD：不再画整条底色，元素各自带小chip/描边，露出背景
       var bestM = DG.SAVE.d.bestM;
-      UI.label(P.W / 2, y + 34, '⛏️ ' + R.m + 'm', { size: 44, bold: true, align: 'center', color: '#fff', stroke: true });
+      UI.label(P.W / 2, y + 34, R.m + 'm', { size: 44, bold: true, align: 'center', color: '#fff', stroke: true });
       if (bestM > 0 && R.m < bestM && bestM - R.m <= 30) {
         var blink = 0.6 + 0.4 * Math.sin(Date.now() / 200);
         ctx.globalAlpha = blink;
-        UI.label(P.W / 2, y + 74, '🏁 距纪录只差 ' + (bestM - R.m) + 'm!', { size: 26, bold: true, align: 'center', color: '#ff9f4a', stroke: true });
+        UI.label(P.W / 2, y + 74, '距纪录只差 ' + (bestM - R.m) + 'm!', { size: 26, bold: true, align: 'center', color: '#ff9f4a', stroke: true });
         ctx.globalAlpha = 1;
       } else if (R.m >= bestM && bestM > 0 && R.state === 'play') {
         if (!recordShown) {
@@ -349,7 +357,7 @@ var DG = typeof GameGlobal !== 'undefined' ? (GameGlobal.DG = GameGlobal.DG || {
           DG.FX.banner('🏆 新纪录!', { color: '#ffd76a', size: 60, life: 1.6, pri: true });
           DG.A.sfx('milestone', { vibrate: true, strong: true });
         }
-        UI.label(P.W / 2, y + 74, '🏆 纪录刷新中 ' + DG.D.stratumAt(R.m).name, { size: 24, align: 'center', color: '#ffd76a', stroke: true });
+        UI.label(P.W / 2, y + 74, '纪录刷新中 · ' + DG.D.stratumAt(R.m).name, { size: 24, align: 'center', color: '#ffd76a', stroke: true });
       } else {
         UI.label(P.W / 2, y + 74, DG.D.stratumAt(R.m).name, { size: 24, align: 'center', color: '#e8ecf4', stroke: true });
       }
@@ -358,7 +366,7 @@ var DG = typeof GameGlobal !== 'undefined' ? (GameGlobal.DG = GameGlobal.DG || {
       DG.A.draw(ctx, 'ui_coin', 18, y + 13, 30, 30);
       UI.label(54, y + 28, U.fmt(R.coins), { size: 24, bold: true, color: C.gold });
       UI.chip(12, y + 52, 132, 30);
-      UI.label(22, y + 67, '⭐ ' + U.fmt(R.score), { size: 18, color: '#dfe6f2' });
+      UI.label(22, y + 67, '分 ' + U.fmt(R.score), { size: 18, color: '#dfe6f2' });
       // 连击（右上chip）
       if (R.combo >= 2) {
         UI.chip(P.W - 196, y + 8, 184, 40);
@@ -402,7 +410,13 @@ var DG = typeof GameGlobal !== 'undefined' ? (GameGlobal.DG = GameGlobal.DG || {
       var y0 = P.H - botH + 6;
       // 狂热条（与耐久等粗）
       var fr = R.mods.feverOn ? R.fever / DG.D.tune.feverMax : Math.min(1, R.fever / DG.D.tune.feverMax);
-      UI.bar(20, y0, P.W - 290, 44, fr, R.mods.feverOn ? '#ff6b3f' : '#b678ff', R.mods.feverOn ? '🔥🔥 狂热爆发中!! 🔥🔥' : '🔥 狂热 ' + Math.floor(fr * 100) + '%');
+      if (hintMsg && R.state === 'play') { // 引导语占用狂热条槽位：零遮挡
+        UI.panel(20, y0, P.W - 290, 44, { color: 'rgba(20,26,38,0.95)', borderColor: '#4aa3ff', r: 10 });
+        UI.label(20 + (P.W - 290) / 2, y0 + 22, hintMsg, { size: 20, bold: true, align: 'center', color: '#8fd0ff', maxW: P.W - 314 });
+      } else {
+        UI.bar(20, y0, P.W - 290, 44, fr, R.mods.feverOn ? '#ff6b3f' : '#b678ff', R.mods.feverOn ? '狂热爆发中!!' : '狂热 ' + Math.floor(fr * 100) + '%');
+        DG.A.draw(ctx, 'ui_fire', 26, y0 + 6, 32, 32);
+      }
       // 大耐久条（低耐久红色脉冲告警）
       var durRatio = Math.max(0, R.dur / R.durMax);
       var durLow = durRatio < 0.25;
@@ -411,7 +425,8 @@ var DG = typeof GameGlobal !== 'undefined' ? (GameGlobal.DG = GameGlobal.DG || {
         ctx.lineWidth = 5;
         U.rr(ctx, 16, y0 + 48, P.W - 282, 52, 26); ctx.stroke();
       }
-      UI.bar(20, y0 + 52, P.W - 290, 44, durRatio, durLow ? UI.C.red : UI.C.green, '⛏️ ' + Math.ceil(Math.max(0, R.dur)) + ' / ' + Math.round(R.durMax));
+      UI.bar(20, y0 + 52, P.W - 290, 44, durRatio, durLow ? UI.C.red : UI.C.green, Math.ceil(Math.max(0, R.dur)) + ' / ' + Math.round(R.durMax));
+      DG.A.draw(ctx, 'ui_energy', 26, y0 + 58, 32, 32);
       // 已获强化图标
       if (R.perks.length) {
         var px = 26;
@@ -425,21 +440,21 @@ var DG = typeof GameGlobal !== 'undefined' ? (GameGlobal.DG = GameGlobal.DG || {
       // 撤离按钮（右下大按钮）；时机成熟时隐晦发光提示——懂的人自然懂
       if (R.state === 'play') {
         var wiseExit = durLow && R.exitMult > 1;   // 血少+倍率在手=该考虑走了
-        var exitTxt = R.exitMult > 1 ? '🏳️ 撤离 ×' + R.exitMult.toFixed(1) : '🏳️ 撤离结算';
+        var exitTxt = R.exitMult > 1 ? '撤离 ×' + R.exitMult.toFixed(1) : '撤离结算';
         var exitCol = R.exitMult > 1 ? '#8f6a1e' : '#3a4356';
         if (wiseExit) {
           ctx.strokeStyle = 'rgba(255,215,106,' + (0.35 + 0.35 * Math.sin(Date.now() / 260)) + ')';
           ctx.lineWidth = 4;
           U.rr(ctx, P.W - 254, y0 + 4, 238, 104, 16); ctx.stroke();
         }
-        if (UI.button(P.W - 250, y0 + 8, 230, 96, exitTxt, { color: exitCol, txtColor: '#fff', fontSize: 26, sub: wiseExit ? '见好就收…?' : (R.exitMult > 1 ? '满载而归' : null) })) DG.Run.exitRun();
+        if (UI.button(P.W - 250, y0 + 8, 230, 96, exitTxt, { color: exitCol, txtColor: '#fff', fontSize: 26, glyph: 'ui_flag', sub: wiseExit ? '见好就收…?' : (R.exitMult > 1 ? '满载而归' : null) })) DG.Run.exitRun();
       }
     },
 
     perkOverlay: function (ctx) {
       var R = DG.Run;
       UI.dim(0.72);
-      UI.label(P.W / 2, 250, '⬇️ 深入矿层 · 选择强化 ⬇️', { size: 38, bold: true, align: 'center', color: '#ffd76a' });
+      UI.label(P.W / 2, 250, '深入矿层 · 选择强化', { size: 40, bold: true, align: 'center', color: '#ffd76a' });
       var rc = { white: '#5a6478', blue: '#2f5a8f', gold: '#8f6a1e' };
       var rn = { white: '', blue: '稀有', gold: '★金色★' };
       for (var i = 0; i < R.perkChoices.length; i++) {
@@ -545,7 +560,7 @@ var DG = typeof GameGlobal !== 'undefined' ? (GameGlobal.DG = GameGlobal.DG || {
       UI.panel(x, y, w, estH);
       // ---- 头部：标题 + 徽章行（依次向下排，绝不叠字）----
       var cy = y + 50;
-      UI.label(P.W / 2, cy, d.challenge ? '⚔️ 挑战结算' : d.first ? '🎉 结算 · 当日首局×2' : '⛏️ 挖掘结算', { size: 38, bold: true, align: 'center', color: '#ffd76a' });
+      UI.label(P.W / 2, cy, d.challenge ? '挑 战 结 算' : d.first ? '结算 · 当日首局×2' : '挖 掘 结 算', { size: 38, bold: true, align: 'center', color: '#ffd76a' });
       cy += 48;
       if (d.newRecord) { UI.label(P.W / 2, cy, '🏆 新纪录!', { size: 30, bold: true, align: 'center', color: '#ff9f4a' }); cy += 38; }
       if (d.highlight) { UI.label(P.W / 2, cy, '🏅 ' + d.highlight, { size: 24, align: 'center', color: '#ffcf3f', maxW: w - 60 }); cy += 34; }
@@ -611,11 +626,11 @@ var DG = typeof GameGlobal !== 'undefined' ? (GameGlobal.DG = GameGlobal.DG || {
       }
       // ---- 排行 / 分享 ----
       cy += 10;
-      if (UI.button(x + 30, cy, (w - 80) / 2, 60, '🏆 排行榜', { color: '#3a4356', txtColor: '#fff', fontSize: 25 })) {
+      if (UI.button(x + 30, cy, (w - 80) / 2, 60, '排行榜', { color: '#3a4356', txtColor: '#fff', fontSize: 25, glyph: 'ui_trophy' })) {
         DG.D.track('rank_view');
         DG.FX.banner('🏆 好友排行 · 上线微信后开放', { pri: true });
       }
-      if (UI.button(x + w / 2 + 10, cy, (w - 80) / 2, 60, '📤 分享战报', { color: '#3a4356', txtColor: '#fff', fontSize: 25 })) {
+      if (UI.button(x + w / 2 + 10, cy, (w - 80) / 2, 60, '分享战报', { color: '#3a4356', txtColor: '#fff', fontSize: 25, glyph: 'ui_share' })) {
         DG.D.track('share_settle');
         DG.FX.banner('📤 战报已生成 · 分享给好友 (模拟)', { pri: true });
       }

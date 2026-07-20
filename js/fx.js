@@ -24,8 +24,9 @@ var DG = typeof GameGlobal !== 'undefined' ? (GameGlobal.DG = GameGlobal.DG || {
   /* 图片特效：爆炸/彩光等贴图 放大淡出 */
   FX.sprs = [];
   FX.spr = function (x, y, imgId, size, life) {
+    if (FX.lowQ && (size || 160) < 240) return; // 降质时略过小型贴图特效
     FX.sprs.push({ x: x, y: y, id: imgId, size: size || 160, t: 0, life: life || 0.45 });
-    if (FX.sprs.length > 12) FX.sprs.shift();
+    if (FX.sprs.length > (FX.lowQ ? 6 : 12)) FX.sprs.shift();
   };
 
   /* 色块粒子爆开（lowQ=帧率吃紧时主循环置位，粒子减半、上限收紧） */
@@ -117,7 +118,10 @@ var DG = typeof GameGlobal !== 'undefined' ? (GameGlobal.DG = GameGlobal.DG || {
       var sc = f.pop && k < 0.2 ? U.easeOutBack(k / 0.2) : 1;
       ctx.globalAlpha = k > 0.6 ? 1 - (k - 0.6) / 0.4 : 1;
       ctx.font = 'bold ' + Math.floor(f.size * sc) + 'px Xiaolai, sans-serif';
-      if (f.stroke) { ctx.strokeStyle = 'rgba(0,0,0,0.6)'; ctx.lineWidth = 5; ctx.strokeText(f.txt, f.x, f.y); }
+      if (f.stroke) { // lowQ时strokeText换成底字双绘（手机描边文字极慢）
+        if (FX.lowQ) { ctx.fillStyle = 'rgba(0,0,0,0.6)'; ctx.fillText(f.txt, f.x, f.y + 2); }
+        else { ctx.strokeStyle = 'rgba(0,0,0,0.6)'; ctx.lineWidth = 5; ctx.strokeText(f.txt, f.x, f.y); }
+      }
       ctx.fillStyle = f.color;
       ctx.fillText(f.txt, f.x, f.y);
     }
@@ -127,8 +131,8 @@ var DG = typeof GameGlobal !== 'undefined' ? (GameGlobal.DG = GameGlobal.DG || {
       var scale = kk < 0.25 ? U.easeOutBack(kk / 0.25) : 1;
       ctx.globalAlpha = kk > 0.7 ? 1 - (kk - 0.7) / 0.3 : 1;
       ctx.font = 'bold ' + Math.floor(b.size * scale) + 'px Xiaolai, sans-serif';
-      ctx.strokeStyle = 'rgba(0,0,0,0.7)'; ctx.lineWidth = 8;
-      ctx.strokeText(b.txt, DG.P.W / 2, b.y);
+      if (FX.lowQ) { ctx.fillStyle = 'rgba(0,0,0,0.7)'; ctx.fillText(b.txt, DG.P.W / 2, b.y + 3); }
+      else { ctx.strokeStyle = 'rgba(0,0,0,0.7)'; ctx.lineWidth = 8; ctx.strokeText(b.txt, DG.P.W / 2, b.y); }
       ctx.fillStyle = b.color;
       ctx.fillText(b.txt, DG.P.W / 2, b.y);
       ctx.globalAlpha = 1;

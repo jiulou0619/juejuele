@@ -31,6 +31,15 @@ var DG = typeof GameGlobal !== 'undefined' ? (GameGlobal.DG = GameGlobal.DG || {
     P.safeTop = 10;
   }
 
+  var dprCap = 2;
+  /* 持续掉帧时由主循环调用：分辨率降到1.5x，一次性、不可逆（防抖动） */
+  P.lowerDpr = function () {
+    if (isWX || dprCap <= 1.5) return false;
+    dprCap = 1.5;
+    layout();
+    return true;
+  };
+
   function layout() {
     if (isWX) return;
     winW = window.innerWidth || 375;
@@ -38,7 +47,7 @@ var DG = typeof GameGlobal !== 'undefined' ? (GameGlobal.DG = GameGlobal.DG || {
     // 桌面浏览器强制竖屏比例便于调试
     if (winW / winH > 750 / 1200) winW = Math.round(winH * 750 / 1334);
     if (winW < 50) winW = 375;
-    dpr = Math.min(window.devicePixelRatio || 1, 2);
+    dpr = Math.min(window.devicePixelRatio || 1, dprCap);
     canvas.width = winW * dpr;
     canvas.height = winH * dpr;
     canvas.style.width = winW + 'px';

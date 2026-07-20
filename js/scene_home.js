@@ -109,7 +109,7 @@ var DG = typeof GameGlobal !== 'undefined' ? (GameGlobal.DG = GameGlobal.DG || {
         UI.dim(0.75);
         var sw = P.W - 120, sx = 60, sh = 420, sy2 = Math.floor((P.H - sh) / 2) - 40;
         UI.panel(sx, sy2, sw, sh);
-        UI.label(P.W / 2, sy2 + 56, '⚙️ 声 音 设 置', { size: 34, bold: true, align: 'center', color: '#ffd76a' });
+        UI.label(P.W / 2, sy2 + 56, '声 音 设 置', { size: 34, bold: true, align: 'center', color: '#ffd76a' });
         // 音乐
         DG.A.draw(ctx, s.opt.bgmVol > 0 ? 'ic_music' : 'ic_music_off', sx + 36, sy2 + 108, 44, 44);
         UI.label(sx + 96, sy2 + 130, '音乐', { size: 26, bold: true, color: '#fff' });
@@ -156,7 +156,7 @@ var DG = typeof GameGlobal !== 'undefined' ? (GameGlobal.DG = GameGlobal.DG || {
 
       // 开始按钮
       var sy = by + pad + 208;
-      if (UI.button(P.W / 2 - 220, sy, 440, 104, '▶️ 开始挖掘', { fontSize: 42, sub: s.daily.firstRun ? '🎁 当日首局收益 ×2' : '目标：挖得比 ' + s.bestM + 'm 更深', badge: s.daily.firstRun ? '!' : 0 })) {
+      if (UI.button(P.W / 2 - 220, sy, 440, 104, '开 始 挖 掘', { fontSize: 42, sub: s.daily.firstRun ? '当日首局收益 ×2' : '目标：挖得比 ' + s.bestM + 'm 更深', badge: s.daily.firstRun ? '!' : 0 })) {
         DG.Main.go('run');
       }
 

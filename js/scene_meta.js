@@ -11,8 +11,8 @@ var DG = typeof GameGlobal !== 'undefined' ? (GameGlobal.DG = GameGlobal.DG || {
   var wheel = { ang: 0, spinning: false, t: 0, dur: 0, from: 0, to: 0, targetIdx: -1, result: null };
 
   var TABS = [
-    { id: 'shop', txt: '🛒商店' }, { id: 'box', txt: '🎁盲盒' }, { id: 'codex', txt: '📖图鉴' },
-    { id: 'wheel', txt: '🎡转盘' }, { id: 'puzzle', txt: '🧩拼图' }, { id: 'skin', txt: '💪强化' }
+    { id: 'shop', txt: '商店', icon: 'ic_shop' }, { id: 'box', txt: '盲盒', icon: 'ic_box' }, { id: 'codex', txt: '图鉴', icon: 'ic_book' },
+    { id: 'wheel', txt: '转盘', icon: 'ic_wheel' }, { id: 'puzzle', txt: '拼图', icon: 'ic_puzzle' }, { id: 'skin', txt: '强化', icon: 'ic_gym' }
   ];
 
   /* ---------- 盲盒抽取（三重保底：25硬保底SSR / 10抽R+ / 首盒R+） ---------- */
@@ -190,7 +190,7 @@ var DG = typeof GameGlobal !== 'undefined' ? (GameGlobal.DG = GameGlobal.DG || {
         var un = DG.D.unlocks[TABS[i].id] ? DG.D.unlocks[TABS[i].id](s) : true;
         var active = tab === TABS[i].id;
         if (UI.button(20 + i * tw, by + 8, tw - 6, 56, un ? TABS[i].txt : '🔒', {
-          color: active ? UI.C.pri : UI.C.panel2, txtColor: active ? '#2b2410' : (un ? '#dfe6f2' : '#5a6478'), fontSize: 21, disabled: !un || modal
+          color: active ? UI.C.pri : UI.C.panel2, glyph: un ? TABS[i].icon : null, fontSize: 21, disabled: !un || modal
         })) { tab = TABS[i].id; boxResult = null; wheel.result = null; }
       }
       var top = by + 80;

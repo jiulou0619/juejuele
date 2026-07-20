@@ -102,7 +102,7 @@ var DG = typeof GameGlobal !== 'undefined' ? (GameGlobal.DG = GameGlobal.DG || {
     var h = 150 + (mh + 18) + chh * 3 + 16 * 2 + 18 + 46 + 62 + 22;
     var y = Math.max(P.safeTop + 24, Math.floor((P.H - h) / 2));
     UI.panel(x, y, w, h);
-    UI.label(P.W / 2, y + 54, '💎 星 钻 充 值', { size: 40, bold: true, align: 'center', color: '#ffd76a' });
+    UI.label(P.W / 2, y + 54, '星 钻 充 值', { size: 40, bold: true, align: 'center', color: '#ffd76a' });
     // 上下文遗憾行：差多少补多少
     if (PAY.gap > 0 && FROM_TXT[PAY.from]) {
       var bl = 0.7 + 0.3 * Math.sin(Date.now() / 200);
