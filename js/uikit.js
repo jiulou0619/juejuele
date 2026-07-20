@@ -536,6 +536,11 @@ var DG = typeof GameGlobal !== 'undefined' ? (GameGlobal.DG = GameGlobal.DG || {
     var plate = DG.A.images.vu_label;
     for (var i = 0; i < items.length; i++) {
       var x = x0 + i * (w + 10);
+      // 点一下说明这是什么、拿来干嘛（新玩家看图标猜不出来）
+      if (items[i].tip && UI.tap && U.inRect(UI.tap.x, UI.tap.y, x, y, w, h)) {
+        UI.tap = null;
+        DG.FX.text(Math.min(P.W - 150, Math.max(150, x + w / 2)), y + h + 34, items[i].tip, { color: UI.C.gold, size: 24, life: 2.2, up: false });
+      }
       if (plate) UI.img9('vu_label', x, y, w, h, 52, 22, false, 1);
       else UI.panel(x, y, w, h, { color: 'rgba(0,0,0,0.5)', r: 26, border: false });
       // 数字居中在条内，图标嵌在左端圆头里

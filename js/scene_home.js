@@ -140,10 +140,10 @@ var DG = typeof GameGlobal !== 'undefined' ? (GameGlobal.DG = GameGlobal.DG || {
         return;
       }
       var by = UI.currencyBar([
-        { icon: 'ui_coin', txt: U.fmt(s.coin) },
-        { icon: 'ui_gem', txt: U.fmt(s.gem) },
-        { icon: 'ui_key', txt: '' + s.boxkey },
-        { icon: 'ui_ticket', txt: '' + s.ticket }
+        { icon: 'ui_coin', txt: U.fmt(s.coin), tip: '金币：商店升级 / 局前补给' },
+        { icon: 'ui_gem', txt: U.fmt(s.gem), tip: '星钻：开盲盒 / 复活 / 转盘' },
+        { icon: 'ui_key', txt: '' + s.boxkey, tip: '盲盒券：免费开1个盲盒' },
+        { icon: 'ui_ticket', txt: '' + s.ticket, tip: '转盘券：免费转1次转盘' }
       ]);
       DG.PAY.gemHotspot(20);
       // 声音设置入口（右上角，点开滑条调音量）

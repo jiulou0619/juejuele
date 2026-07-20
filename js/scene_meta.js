@@ -178,10 +178,10 @@ var DG = typeof GameGlobal !== 'undefined' ? (GameGlobal.DG = GameGlobal.DG || {
       var modal = (tab === 'box' && (!!boxResult || !!boxAnim)) || (tab === 'puzzle' && !!puzzleShow);
       if (UI.button(14, P.safeTop + 26, 72, 52, '←', { color: '#3a4356', txtColor: '#fff', fontSize: 30, disabled: modal })) { DG.Main.go('home'); return; }
       var by = UI.currencyBar([
-        { icon: 'ui_coin', txt: U.fmt(s.coin) },
-        { icon: 'ui_gem', txt: U.fmt(s.gem) },
-        { icon: 'ui_dust', txt: U.fmt(s.dust) },
-        { icon: 'ui_ticket', txt: '' + s.ticket }
+        { icon: 'ui_coin', txt: U.fmt(s.coin), tip: '金币：商店升级 / 局前补给' },
+        { icon: 'ui_gem', txt: U.fmt(s.gem), tip: '星钻：开盲盒 / 复活 / 转盘' },
+        { icon: 'ui_dust', txt: U.fmt(s.dust), tip: '星尘：重复藏品/化石分解所得，去盲盒页兑换' },
+        { icon: 'ui_ticket', txt: '' + s.ticket, tip: '转盘券：免费转1次转盘' }
       ], 98);
       DG.PAY.gemHotspot(98);
       var tw = (P.W - 40) / 6;
