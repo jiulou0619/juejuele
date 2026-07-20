@@ -182,13 +182,13 @@ var DG = typeof GameGlobal !== 'undefined' ? (GameGlobal.DG = GameGlobal.DG || {
       var gs = fs * 1.1;
       var tw = lTok ? 0 : ctx.measureText(label).width;
       if (lTok) { for (var q = 0; q < lTok.length; q++) tw += lTok[q].i ? fs * 1.18 : ctx.measureText(lTok[q].t).width; }
-      DG.A.draw(ctx, opts.glyph, x + w / 2 - tw / 2 - gs - 6, ly - gs / 2, gs, gs);
+      DG.A.drawTint(ctx, opts.glyph, x + w / 2 - tw / 2 - gs - 6, ly - gs / 2, gs, gs, txtCol);
       ctx.fillStyle = txtCol;
-      if (lTok) UI.richText(ctx, lTok, x + w / 2 + gs / 2 + 2, ly, fs, 'center', dbl);
+      if (lTok) UI.richText(ctx, lTok, x + w / 2 + gs / 2 + 2, ly, fs, 'center', dbl, txtCol);
       else { if (dbl) { ctx.fillStyle = dbl; ctx.fillText(label, x + w / 2 + gs / 2 + 2, ly + 2); ctx.fillStyle = txtCol; } ctx.fillText(label, x + w / 2 + gs / 2 + 2, ly); }
     } else if (lTok) {
       ctx.fillStyle = txtCol;
-      UI.richText(ctx, lTok, x + w / 2, ly, fs, 'center', dbl);
+      UI.richText(ctx, lTok, x + w / 2, ly, fs, 'center', dbl, txtCol);
     } else {
       if (dbl) { ctx.fillStyle = dbl; ctx.fillText(label, x + w / 2, ly + 2); }
       ctx.fillStyle = txtCol;
@@ -198,7 +198,7 @@ var DG = typeof GameGlobal !== 'undefined' ? (GameGlobal.DG = GameGlobal.DG || {
       var sfs = Math.floor(Math.max(fs * 0.72, 19));
       ctx.font = sfs + 'px Xiaolai, sans-serif';
       var sTok = tokenize(opts.sub);
-      if (sTok) { ctx.fillStyle = subCol; UI.richText(ctx, sTok, x + w / 2, y + h / 2 + fs * 0.55, sfs, 'center', dbl); }
+      if (sTok) { ctx.fillStyle = subCol; UI.richText(ctx, sTok, x + w / 2, y + h / 2 + fs * 0.55, sfs, 'center', dbl, subCol); }
       else {
         if (dbl) { ctx.fillStyle = dbl; ctx.fillText(opts.sub, x + w / 2, y + h / 2 + fs * 0.55 + 2, w - 16); }
         ctx.fillStyle = subCol;
@@ -337,16 +337,17 @@ var DG = typeof GameGlobal !== 'undefined' ? (GameGlobal.DG = GameGlobal.DG || {
     return res;
   }
   /* 带内联图标地绘制一行文字（字体/颜色由调用方先设好） */
-  UI.richText = function (ctx, toks, x, y, fsz, align, strokeCol) {
+  UI.richText = function (ctx, toks, x, y, fsz, align, strokeCol, iconTint) {
     var isz = Math.round(fsz * 1.06), gap = Math.round(fsz * 0.12), i, w = 0;
     for (i = 0; i < toks.length; i++) w += toks[i].i ? isz + gap : ctx.measureText(toks[i].t).width;
     var cx = align === 'center' ? x - w / 2 : align === 'right' ? x - w : x;
-    var oldAlign = ctx.textAlign;
+    var oldAlign = ctx.textAlign, oldFill = ctx.fillStyle;
     ctx.textAlign = 'left';
     for (i = 0; i < toks.length; i++) {
       var tk = toks[i];
       if (tk.i) {
-        DG.A.draw(ctx, tk.i, cx, y - isz / 2, isz, isz);
+        DG.A.drawTint(ctx, tk.i, cx, y - isz / 2, isz, isz, iconTint);
+        ctx.fillStyle = oldFill;
         cx += isz + gap;
       } else {
         if (strokeCol) { var sf = ctx.fillStyle; ctx.fillStyle = strokeCol; ctx.fillText(tk.t, cx + 1, y + 2); ctx.fillStyle = sf; }

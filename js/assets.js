@@ -42,6 +42,33 @@ var DG = typeof GameGlobal !== 'undefined' ? (GameGlobal.DG = GameGlobal.DG || {
     }
   };
 
+  /* 图标按需染色（按钮内的图标要跟按钮文字同色，否则和底色糊成一片）。
+   * 结果缓存成离屏画布，同一(图标,颜色)只算一次；超量整体清空。 */
+  var tintCache = {}, tintN = 0;
+  A.tinted = function (id, color) {
+    var key = id + '|' + color;
+    var c = tintCache[key];
+    if (c !== undefined) return c;
+    var img = A.images[id];
+    if (!img) return null;                       // 图还没加载：这次先按原色画
+    try {
+      var cv = DG.P.newCanvas(64, 64), g = cv.getContext('2d');
+      g.drawImage(img, 0, 0, 64, 64);
+      g.globalCompositeOperation = 'source-in';  // 只保留图标形状，整体填成目标色
+      g.fillStyle = color;
+      g.fillRect(0, 0, 64, 64);
+      if (tintN > 120) { tintCache = {}; tintN = 0; }
+      tintCache[key] = cv; tintN++;
+      return cv;
+    } catch (e) { tintCache[key] = null; return null; }
+  };
+  /* 染色绘制：拿不到染色版就退回原色，绝不空绘 */
+  A.drawTint = function (ctx, id, x, y, w, h, color) {
+    var t = color && A.tinted(id, color);
+    if (t) ctx.drawImage(t, x, y, w, h);
+    else A.draw(ctx, id, x, y, w, h);
+  };
+
   /* ---------- 真实音效（assets/sfx/*.mp3；未映射的id保持静音） ---------- */
   A.sfxFiles = {
     dig: 'dig.mp3', pop_s: 'collect_sound.mp3', pop_m: 'dig_double_sound.mp3', pop_l: 'dig_hard_sound.mp3',

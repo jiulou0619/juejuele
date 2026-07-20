@@ -73,6 +73,13 @@ var DG = typeof GameGlobal !== 'undefined' ? (GameGlobal.DG = GameGlobal.DG || {
   P.H = canvas.height / P.scale;        // 逻辑高度（约1334，随屏幕比例变化）
   P.winW = winW;
 
+  /* 离屏画布（图标染色缓存用），双端兼容 */
+  P.newCanvas = function (w, h) {
+    var c = isWX ? wx.createCanvas() : document.createElement('canvas');
+    c.width = w; c.height = h;
+    return c;
+  };
+
   P.resetTransform = function () {
     ctx.setTransform(P.scale, 0, 0, P.scale, 0, 0);
   };
