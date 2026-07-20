@@ -81,24 +81,21 @@ var DG = typeof GameGlobal !== 'undefined' ? (GameGlobal.DG = GameGlobal.DG || {
         { icon: 'ui_ticket', txt: '' + s.ticket }
       ]);
       DG.PAY.gemHotspot(20);
+      // 内容整体垂直居中（高屏不再顶部堆内容、底部留大片空地）
+      var contentH = 208 + 116 + 96 + (unlocked('daily') ? 320 : 90) + 202;
+      var pad = Math.max(0, Math.floor((P.H - by - contentH - 46) / 2));
       // 标题（Logo 图，缺图回退文字）
       var logo = DG.A.images.logo;
       if (logo) {
         var lw = 520, lh = lw * logo.height / logo.width;
-        ctx.drawImage(logo, P.W / 2 - lw / 2, by + 10, lw, lh);
+        ctx.drawImage(logo, P.W / 2 - lw / 2, by + pad + 10, lw, lh);
       } else {
-        UI.label(P.W / 2, by + 56, '⛏️ 掘 掘 乐 ⛏️', { size: 60, bold: true, align: 'center', color: '#ffd76a' });
+        UI.label(P.W / 2, by + pad + 56, '⛏️ 掘 掘 乐 ⛏️', { size: 60, bold: true, align: 'center', color: '#ffd76a' });
       }
-      UI.label(P.W / 2, by + 182, '最深 ' + s.bestM + 'm · 累计 ' + U.fmt(s.cumM) + 'm · ' + s.runCount + '局', { size: 24, align: 'center', color: UI.C.dim });
-      // 柯基矿工吉祥物
-      var dog = DG.A.images.dog_corgi;
-      if (dog) {
-        var dh = 230, dw = dh * dog.width / dog.height;
-        ctx.drawImage(dog, 14, P.H - dh - 56, dw, dh);
-      }
+      UI.label(P.W / 2, by + pad + 182, '最深 ' + s.bestM + 'm · 累计 ' + U.fmt(s.cumM) + 'm · ' + s.runCount + '局', { size: 24, align: 'center', color: UI.C.dim });
 
       // 开始按钮
-      var sy = by + 208;
+      var sy = by + pad + 208;
       if (UI.button(P.W / 2 - 220, sy, 440, 104, '▶️ 开始挖掘', { fontSize: 42, sub: s.daily.firstRun ? '🎁 当日首局收益 ×2' : '目标：挖得比 ' + s.bestM + 'm 更深', badge: s.daily.firstRun ? '!' : 0 })) {
         DG.Main.go('run');
       }
@@ -218,7 +215,7 @@ var DG = typeof GameGlobal !== 'undefined' ? (GameGlobal.DG = GameGlobal.DG || {
         DG.SAVE.wipe();
         DG.Main.go('home');
       }
-      UI.label(20, P.H - 32, '原型版 · 贴图/音效为文字占位', { size: 18, color: '#5a6478' });
+      UI.label(20, P.H - 32, '原型版', { size: 18, color: '#5a6478' });
     }
   });
 })();
