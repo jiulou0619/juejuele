@@ -114,30 +114,11 @@ var DG = typeof GameGlobal !== 'undefined' ? (GameGlobal.DG = GameGlobal.DG || {
         ctx.fillStyle = 'rgba(42,38,37,0.72)';
         ctx.fillRect(-4, -4, P.W + 8, P.H + 8);
       }
-      // 声音设置弹层（模态：先画先吃输入，直接return）
-      if (setOpen) {
-        if (!s.opt) s.opt = { bgm: 1, sfx: 1, bgmVol: 0.3, sfxVol: 0.3 };
-        if (s.opt.bgmVol == null) s.opt.bgmVol = 0.3;
-        if (s.opt.sfxVol == null) s.opt.sfxVol = 0.3;
-        UI.dim(0.75);
-        var sw = P.W - 120, sx = 60, sh = 470, sy2 = Math.floor((P.H - sh) / 2) - 40;
-        UI.panel(sx, sy2, sw, sh);
-        UI.label(P.W / 2, sy2 + 54, '声 音 设 置', { size: 34, bold: true, align: 'center', color: UI.C.gold });
-        // 音乐：图标+名称+百分比一行，滑条独占一行（拖到底=静音）
-        DG.A.draw(ctx, s.opt.bgmVol > 0 ? 'ic_music' : 'ic_music_off', sx + 38, sy2 + 106, 46, 46);
-        UI.label(sx + 100, sy2 + 129, '音乐', { size: 27, bold: true, color: UI.C.txt });
-        UI.label(sx + sw - 38, sy2 + 129, Math.round(s.opt.bgmVol * 100) + '%', { size: 26, bold: true, align: 'right', color: s.opt.bgmVol > 0 ? UI.C.gold : UI.C.dim });
-        var nv = volSlider(ctx, sx + 48, sy2 + 192, sw - 96, s.opt.bgmVol);
-        if (nv != null && nv !== s.opt.bgmVol) { s.opt.bgmVol = nv; s.opt.bgm = nv > 0 ? 1 : 0; DG.A.applyBgmVol(); }
-        // 音效
-        DG.A.draw(ctx, s.opt.sfxVol > 0 ? 'pr_snd_on' : 'pr_snd_off', sx + 38, sy2 + 254, 46, 46);
-        UI.label(sx + 100, sy2 + 277, '音效', { size: 27, bold: true, color: UI.C.txt });
-        UI.label(sx + sw - 38, sy2 + 277, Math.round(s.opt.sfxVol * 100) + '%', { size: 26, bold: true, align: 'right', color: s.opt.sfxVol > 0 ? UI.C.gold : UI.C.dim });
-        var nv2 = volSlider(ctx, sx + 48, sy2 + 340, sw - 96, s.opt.sfxVol);
-        if (nv2 != null && nv2 !== s.opt.sfxVol) { s.opt.sfxVol = nv2; s.opt.sfx = nv2 > 0 ? 1 : 0; }
-        if (UI.justUp) { DG.SAVE.save(); DG.A.sfx('ui_tap'); } // 松手时存档+试听音效
-        if (UI.button(P.W / 2 - 120, sy2 + sh - 84, 240, 62, '关闭', { color: UI.C.panel2, fontSize: 27 })) setOpen = false;
-        return;
+      // 音量浮层开着时：吞掉全部点击（点浮层外=关闭），滑条拖动走 pointer 不受影响
+      var popX = P.W - 516, popY = P.safeTop + 26 + 52 + 74, popW = 496, popH = 196;
+      if (setOpen && UI.tap) {
+        if (!U.inRect(UI.tap.x, UI.tap.y, popX, popY, popW, popH)) setOpen = false;
+        UI.tap = null;
       }
       var by = UI.currencyBar(DG.D.topBar(s));
       DG.PAY.gemHotspot(20);
@@ -313,6 +294,22 @@ var DG = typeof GameGlobal !== 'undefined' ? (GameGlobal.DG = GameGlobal.DG || {
         else resetArm = Date.now();
       }
       UI.label(20, P.H - 32, '原型版', { size: 18, color: '#5a6478' });
+
+      // 音量浮层：贴着图标就地弹出，两条可拖滑条（最后画=盖在最上层）
+      if (setOpen) {
+        if (s.opt.bgmVol == null) s.opt.bgmVol = 0.3;
+        if (s.opt.sfxVol == null) s.opt.sfxVol = 0.3;
+        UI.panel(popX, popY, popW, popH);
+        DG.A.draw(ctx, s.opt.bgmVol > 0 ? 'ic_music' : 'ic_music_off', popX + 22, popY + 30, 36, 36);
+        var nv = volSlider(ctx, popX + 84, popY + 48, 310, s.opt.bgmVol);
+        if (nv != null && nv !== s.opt.bgmVol) { s.opt.bgmVol = nv; s.opt.bgm = nv > 0 ? 1 : 0; DG.A.applyBgmVol(); }
+        UI.label(popX + popW - 24, popY + 48, Math.round(s.opt.bgmVol * 100) + '%', { size: 23, bold: true, align: 'right', color: s.opt.bgmVol > 0 ? UI.C.gold : UI.C.dim });
+        DG.A.draw(ctx, s.opt.sfxVol > 0 ? 'pr_snd_on' : 'pr_snd_off', popX + 22, popY + 126, 36, 36);
+        var nv2 = volSlider(ctx, popX + 84, popY + 144, 310, s.opt.sfxVol);
+        if (nv2 != null && nv2 !== s.opt.sfxVol) { s.opt.sfxVol = nv2; s.opt.sfx = nv2 > 0 ? 1 : 0; }
+        UI.label(popX + popW - 24, popY + 144, Math.round(s.opt.sfxVol * 100) + '%', { size: 23, bold: true, align: 'right', color: s.opt.sfxVol > 0 ? UI.C.gold : UI.C.dim });
+        if (UI.justUp) { DG.SAVE.save(); DG.A.sfx('ui_tap'); } // 松手时存档+试听
+      }
     }
   });
 })();
