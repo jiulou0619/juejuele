@@ -122,14 +122,11 @@ var DG = typeof GameGlobal !== 'undefined' ? (GameGlobal.DG = GameGlobal.DG || {
       }
       var by = UI.currencyBar(DG.D.topBar(s));
       DG.PAY.gemHotspot(20);
-      // 声音设置入口（右上角，点开滑条调音量）
+      // 声音设置入口（单个喇叭按钮，点开=音乐/音效两条滑条浮层）
       if (!s.opt) s.opt = { bgm: 1, sfx: 1, bgmVol: 0.3, sfxVol: 0.3 };
-      var bgmMute = !s.opt.bgm || !s.opt.bgmVol;
-      var sfxMute = !s.opt.sfx || !s.opt.sfxVol;
-      if (UI.button(P.W - 130, by + 10, 56, 56, '', { color: '#3a4356' })) setOpen = true;
-      DG.A.draw(ctx, bgmMute ? 'ic_music_off' : 'ic_music', P.W - 130 + 11, by + 21, 34, 34);
+      var allMute = (!s.opt.bgm || !s.opt.bgmVol) && (!s.opt.sfx || !s.opt.sfxVol);
       if (UI.button(P.W - 66, by + 10, 56, 56, '', { color: '#3a4356' })) setOpen = true;
-      DG.A.draw(ctx, sfxMute ? 'pr_snd_off' : 'pr_snd_on', P.W - 66 + 11, by + 21, 34, 34);
+      DG.A.draw(ctx, allMute ? 'pr_snd_off' : 'pr_snd_on', P.W - 66 + 11, by + 21, 34, 34);
       // 内容整体垂直居中（高屏不再顶部堆内容、底部留大片空地）
       var contentH = 56 + (s.runCount >= 2 ? 196 : 128) + 212 + (unlocked('daily') ? 394 : 90) + 202;
       var pad = Math.max(0, Math.floor((P.H - by - contentH - 46) / 2));
