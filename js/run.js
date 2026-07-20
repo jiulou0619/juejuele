@@ -358,7 +358,7 @@ var DG = typeof GameGlobal !== 'undefined' ? (GameGlobal.DG = GameGlobal.DG || {
     }
     var group = G.groupAt(r, c);
     var min = R.mods.feverOn ? 2 : T.matchMin;
-    var deepCost = Math.floor(R.m / 150); // 越深每铲越费镐：150m起+1，无尽段自然收敛
+    var deepCost = Math.floor(R.m / 130); // 越深每铲越费镐：130m起+1——后段压力上来，复活/补给的价值随深度陡升
     if (cell.kind === 'color' && group.length >= min) {
       var res2 = G.popGroup(r, c);
       if (!R.mods.feverOn) spendDur(T.durCostPop + deepCost);
@@ -543,8 +543,29 @@ var DG = typeof GameGlobal !== 'undefined' ? (GameGlobal.DG = GameGlobal.DG || {
     DG.A.sfx('event', { vibrate: true });
     codexFind('ev_' + id);
     if (id === 'chest') { resolveChest(); return; }
+    if (id === 'goldrush') { resolveGoldrush(); return; }
     R.offers.push(id);
     if (!R.offer) promoteOffer();
+  }
+
+  /* 金脉喷发：瞬时爽点——随机6个彩块当场变金矿块，肉眼可见的一片金 */
+  function resolveGoldrush() {
+    var G = DG.Grid, spots = [];
+    for (var r = 2; r < G.rows; r++) for (var c = 0; c < G.cols; c++) {
+      var cl = G.at(r, c);
+      if (cl && cl.kind === 'color' && !cl.ice) spots.push([r, c]);
+    }
+    U.shuffle(spots);
+    var n = Math.min(6, spots.length);
+    for (var i = 0; i < n; i++) {
+      var p = spots[i];
+      G.cells[p[0]][p[1]] = DG.D.makeBlock('gold');
+      var xy = G.cellXY(p[0], p[1]);
+      DG.FX.burst(xy.x + G.cell / 2, xy.y + G.cell / 2, '#ffd15c', 10, 200);
+    }
+    DG.FX.banner('💰 金脉喷发! ×' + n, { color: '#ffd15c', size: 56, pri: true });
+    DG.FX.shake(8, 0.3);
+    DG.A.sfx('milestone', { vibrate: true, strong: true });
   }
 
   function resolveChest() { // 宝箱是纯礼物，直接开不打断
@@ -568,6 +589,8 @@ var DG = typeof GameGlobal !== 'undefined' ? (GameGlobal.DG = GameGlobal.DG || {
     if (id === 'merchant') {
       R.offer = { id: id, t: 12, max: 12, offers: E.offers(R), bought: [] };
       R.merchantMet++;
+    } else if (id === 'curse') {
+      R.offer = { id: 'curse', t: 10, max: 10 };
     } else {
       R.offer = { id: 'gamble', t: 10, max: 10, stones: 3 };
     }
@@ -585,6 +608,19 @@ var DG = typeof GameGlobal !== 'undefined' ? (GameGlobal.DG = GameGlobal.DG || {
     placePendingSpecials();
     DG.A.sfx('buy', { vibrate: true });
     if (o.bought.length >= o.offers.length) promoteOffer();
+  };
+
+  /* 契约石：push-your-luck——献耐久换金币，血少时是艰难抉择 */
+  R.offerCurse = function () {
+    var o = R.offer;
+    if (!o || o.id !== 'curse') return;
+    R.dur -= 12;
+    R.acc.dur -= 12; R.acc.t = 0.6;
+    gainCoin(250, null, null, 'curse');
+    DG.FX.banner('🗿 契约达成 🪙250', { color: '#c58cf7', size: 46, pri: true });
+    DG.A.sfx('event', { vibrate: true });
+    promoteOffer();
+    if (R.dur <= 0) onDead();
   };
 
   R.offerGamble = function () {

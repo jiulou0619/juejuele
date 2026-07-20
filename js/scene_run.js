@@ -258,9 +258,20 @@ var DG = typeof GameGlobal !== 'undefined' ? (GameGlobal.DG = GameGlobal.DG || {
       if (o !== offerRef) { offerRef = o; offerOpen = false; }
       if (!offerOpen) {
         var pw = 264, ph = 52, py = P.H - botH - ph - 10;
-        var isM = o.id === 'merchant';
-        if (UI.button(20, py, pw, ph, isM ? '🦫 商人来了 · 点开' : '❓ 赌石摊 · 点开', { color: '#3a4356', fontSize: 21, badge: '!' })) offerOpen = true;
-        UI.bar(24, py + ph + 2, pw - 8, 6, o.t / o.max, isM ? '#b678ff' : '#ff9f4a');
+        var pillTxt = o.id === 'merchant' ? '🦫 商人来了 · 点开' : o.id === 'curse' ? '🗿 契约石 · 点开' : '❓ 赌石摊 · 点开';
+        var pillCol = o.id === 'merchant' ? '#b678ff' : o.id === 'curse' ? '#c58cf7' : '#ff9f4a';
+        if (UI.button(20, py, pw, ph, pillTxt, { color: '#3a4356', fontSize: 21, badge: '!' })) offerOpen = true;
+        UI.bar(24, py + ph + 2, pw - 8, 6, o.t / o.max, pillCol);
+        return;
+      }
+      if (o.id === 'curse') { // 契约石：献12耐久换250金币（血少时的艰难抉择）
+        var h3 = 92, y3 = P.H - botH - h3 - 14;
+        UI.panel(x, y3, w, h3, { color: 'rgba(26,20,34,0.92)', borderColor: '#c58cf7', r: 14 });
+        UI.label(x + 18, y3 + 30, '🗿 契约石', { size: 24, bold: true, color: '#c58cf7' });
+        UI.label(x + 18, y3 + 60, '献上 12⛏ 耐久 → 🪙250', { size: 17, color: UI.C.dim });
+        if (UI.button(x + w - 250, y3 + 16, 174, 52, '接受契约', { fontSize: 22, disabled: R.dur <= 14 })) DG.Run.offerCurse();
+        if (UI.button(x + w - 66, y3 + 16, 48, 52, '▾', { color: '#3a4356', fontSize: 20 })) { offerOpen = false; return; }
+        UI.bar(x + 12, y3 + h3 - 14, w - 24, 8, o.t / o.max, '#c58cf7');
         return;
       }
       if (o.id === 'merchant') {
@@ -554,7 +565,8 @@ var DG = typeof GameGlobal !== 'undefined' ? (GameGlobal.DG = GameGlobal.DG || {
       if (d.missedCoin > 0) { if (d.missedClaimed) estH += 50; else if (sD.daily.adMissed < 3) estH += 76; }
       estH += Math.min(d.granted.length, 3) * 34;
       if (hooks.length) estH += 6 + 32 + hooks.length * 36;
-      estH += 10 + 70 + 36 + 22; // 排行/分享行 + 明日预告 + 底衬
+      var showMonthly = !DG.D.monthlyActive(sD) && sD.runCount >= 3 && !P.ios;
+      estH += 10 + 70 + 36 + 22 + (showMonthly ? 64 : 0); // 排行/分享行 + 月卡位 + 明日预告 + 底衬
       var btnH = 88;
       var y = Math.max(P.safeTop + 30, Math.floor((P.H - estH - 14 - btnH) / 2) - 10);
       UI.panel(x, y, w, estH);
@@ -635,6 +647,11 @@ var DG = typeof GameGlobal !== 'undefined' ? (GameGlobal.DG = GameGlobal.DG || {
         DG.FX.banner('📤 战报已生成 · 分享给好友 (模拟)', { pri: true });
       }
       cy += 70;
+      // ---- 月卡上车位：不打断、只占一行，天天见 ----
+      if (showMonthly) {
+        if (UI.button(x + 30, cy, w - 60, 54, '⛏ 矿工月卡 ¥30 · 每日60💎 · 隔夜矿车×2', { color: '#5a4a8f', txtColor: '#fff', fontSize: 21 })) DG.PAY.show('monthly');
+        cy += 64;
+      }
       // ---- 明日预告（面板内底部）----
       var tm = DG.D.modOfKey(U.dayKeyOffset(1));
       var ni = sD.signDay % 7;

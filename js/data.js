@@ -145,7 +145,11 @@ var DG = typeof GameGlobal !== 'undefined' ? (GameGlobal.DG = GameGlobal.DG || {
     ev_chest:    { glyph: '📦', color: '#8a6d3b', hp: 1, name: '宝箱', ev: true,
       onDestroy: function (r, c, evs) { evs.push({ ev: 'event', id: 'chest' }); } },
     ev_puzzle:   { glyph: '🧩', color: '#3b7a8a', hp: 1, name: '密室拼图', ev: true,
-      onDestroy: function (r, c, evs) { evs.push({ ev: 'puzzle_piece' }); } }
+      onDestroy: function (r, c, evs) { evs.push({ ev: 'puzzle_piece' }); } },
+    ev_goldrush: { glyph: '💰', color: '#8a6d1e', hp: 1, name: '金脉喷发', ev: true,
+      onDestroy: function (r, c, evs) { evs.push({ ev: 'event', id: 'goldrush' }); } },
+    ev_curse:    { glyph: '🗿', color: '#5a4a6e', hp: 1, name: '契约石', ev: true,
+      onDestroy: function (r, c, evs) { evs.push({ ev: 'event', id: 'curse' }); } }
   };
   D.makeBlock = function (t) {
     var def = D.blockDefs[t];
@@ -204,7 +208,7 @@ var DG = typeof GameGlobal !== 'undefined' ? (GameGlobal.DG = GameGlobal.DG || {
           D._genState.evLayerDone[evKey] = 1;
           // 拼图全通后密室事件退场（换成宝箱），不再产出无处可用的碎片事件
           var allPz = DG.SAVE && DG.SAVE.d && DG.SAVE.d.puzzleDone >= D.puzzles.length;
-          var pool = ['ev_merchant', 'ev_gamble', 'ev_chest', allPz ? 'ev_chest' : 'ev_puzzle'];
+          var pool = ['ev_merchant', 'ev_gamble', 'ev_chest', allPz ? 'ev_chest' : 'ev_puzzle', 'ev_goldrush', 'ev_curse'];
           return D.makeBlock(U.pick(pool));
         }
       }
