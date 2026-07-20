@@ -15,8 +15,8 @@ var DG = typeof GameGlobal !== 'undefined' ? (GameGlobal.DG = GameGlobal.DG || {
 
   if (isWX) {
     canvas = wx.createCanvas(); // 首个 canvas 为主屏
-    try { // 自定义字体（注意：完整TTF超微信包体限制，上线需子集化或CDN加载）
-      wx.loadFontFace({ family: 'Xiaolai', global: true, source: 'url("assets/fonts/Xiaolai.ttf")' });
+    try { // 子集化字体（670KB，含游戏用到的全部字符）
+      wx.loadFontFace({ family: 'Xiaolai', global: true, source: 'url("assets/fonts/Xiaolai_sub.otf")' });
     } catch (e) { }
     var sys = wx.getSystemInfoSync();
     winW = sys.windowWidth;

@@ -327,9 +327,10 @@ var DG = typeof GameGlobal !== 'undefined' ? (GameGlobal.DG = GameGlobal.DG || {
       if (plate) UI.img9('pr_plate', x, y, w, h, 18, 20, false, 1);
       else UI.panel(x, y, w, h, { color: 'rgba(0,0,0,0.5)', r: 26, border: false });
       DG.A.draw(ctx, items[i].icon, x + 5, y + 5, h - 10, h - 10);
-      // 奶油色大字+深色底字：橄榄底板上也看得清
-      UI.label(x + h + 3, y + h / 2 + 3, items[i].txt, { size: 27, bold: true, color: 'rgba(30,32,14,0.85)', maxW: w - h - 12 });
-      UI.label(x + h + 3, y + h / 2 + 1, items[i].txt, { size: 27, bold: true, color: '#fff8e0', maxW: w - h - 12 });
+      // 数字居中放进底板右侧凹槽内（奶油大字+深色底字）
+      var fcx = x + h + (w - h - 24) / 2;
+      UI.label(fcx, y + h / 2 + 3, items[i].txt, { size: 27, bold: true, align: 'center', color: 'rgba(30,32,14,0.85)', maxW: w - h - 34 });
+      UI.label(fcx, y + h / 2 + 1, items[i].txt, { size: 27, bold: true, align: 'center', color: '#fff8e0', maxW: w - h - 34 });
     }
     return y + h;
   };

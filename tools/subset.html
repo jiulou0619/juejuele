@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html><head><meta charset="utf-8"><title>字体子集化</title></head>
+<body>
+<pre id="log">loading...</pre>
+<script src="opentype.min.js"></script>
+<script>
+var L = document.getElementById('log');
+function log(t) { L.textContent += '\n' + t; }
+window.__done = null;
+(async function () {
+  try {
+    var font = await opentype.load('/assets/fonts/Xiaolai.ttf');
+    log('font loaded, glyphs: ' + font.glyphs.length);
+    var chars = await (await fetch('/tools/charset.txt')).text();
+    log('charset: ' + chars.length);
+    var glyphs = [font.glyphs.get(0)];
+    var seen = { 0: true };
+    var miss = 0;
+    for (var i = 0; i < chars.length; i++) {
+      var g = font.charToGlyph(chars[i]);
+      if (!g || g.index === undefined || g.index === 0) { miss++; continue; }
+      if (seen[g.index]) continue;
+      seen[g.index] = true;
+      glyphs.push(g);
+    }
+    log('subset glyphs: ' + glyphs.length + ' (missing ' + miss + ')');
+    var sub = new opentype.Font({
+      familyName: 'Xiaolai', styleName: 'Regular',
+      unitsPerEm: font.unitsPerEm, ascender: font.ascender, descender: font.descender,
+      glyphs: glyphs
+    });
+    var buf = sub.toArrayBuffer();
+    log('subset bytes: ' + buf.byteLength);
+    var r = await fetch('/save?f=assets/fonts/Xiaolai_sub.otf', { method: 'POST', body: new Blob([buf]) });
+    log('save: ' + await r.text());
+    window.__done = { ok: true, bytes: buf.byteLength, glyphs: glyphs.length };
+  } catch (e) {
+    log('ERR: ' + e.message);
+    window.__done = { ok: false, err: e.message };
+  }
+})();
+</script>
+</body></html>
