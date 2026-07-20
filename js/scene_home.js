@@ -139,12 +139,7 @@ var DG = typeof GameGlobal !== 'undefined' ? (GameGlobal.DG = GameGlobal.DG || {
         if (UI.button(P.W / 2 - 120, sy2 + sh - 84, 240, 62, '关闭', { color: UI.C.panel2, fontSize: 27 })) setOpen = false;
         return;
       }
-      var by = UI.currencyBar([
-        { icon: 'ui_coin', txt: U.fmt(s.coin), tip: '金币：商店升级 / 局前补给' },
-        { icon: 'ui_gem', txt: U.fmt(s.gem), tip: '星钻：开盲盒 / 复活 / 转盘' },
-        { icon: 'ui_key', txt: '' + s.boxkey, tip: '盲盒钥匙：免费开1个盲盒' },
-        { icon: 'ui_ticket', txt: '' + s.ticket, tip: '转盘券：免费转1次转盘' }
-      ]);
+      var by = UI.currencyBar(DG.D.topBar(s));
       DG.PAY.gemHotspot(20);
       // 声音设置入口（右上角，点开滑条调音量）
       if (!s.opt) s.opt = { bgm: 1, sfx: 1, bgmVol: 0.3, sfxVol: 0.3 };

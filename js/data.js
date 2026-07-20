@@ -491,6 +491,16 @@ var DG = typeof GameGlobal !== 'undefined' ? (GameGlobal.DG = GameGlobal.DG || {
   ];
   D.ticketCoinCost = 800; // 金币购转盘券（日限1）
 
+  /* 顶部货币栏：全局唯一定义，首页/二级页共用，避免同一格位显示不同货币 */
+  D.topBar = function (s) {
+    return [
+      { icon: 'ui_coin', txt: U.fmt(s.coin), tip: '金币：商店升级 / 局前补给' },
+      { icon: 'ui_gem', txt: U.fmt(s.gem), tip: '星钻：开盲盒 / 复活 / 转盘' },
+      { icon: 'ui_key', txt: '' + s.boxkey, tip: '盲盒钥匙：免费开1个盲盒' },
+      { icon: 'ui_ticket', txt: '' + s.ticket, tip: '转盘券：免费转1次转盘' }
+    ];
+  };
+
   /* ================= 拼图：6幅×9片 ================= */
   D.puzzles = [
     { id: 'p1', name: '地心熔炉', pic: ['🌋', '🔥', '⛰️', '🔥', '🌋', '🔥', '⛰️', '🔥', '🌋'], reward: { skin: 'lava', coin: 500 }, rtxt: '熔岩皮肤+500金币' },

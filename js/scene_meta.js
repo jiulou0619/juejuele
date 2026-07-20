@@ -177,12 +177,8 @@ var DG = typeof GameGlobal !== 'undefined' ? (GameGlobal.DG = GameGlobal.DG || {
       // 返回键在最左，货币栏右移让位（修遮挡bug）
       var modal = (tab === 'box' && (!!boxResult || !!boxAnim)) || (tab === 'puzzle' && !!puzzleShow);
       if (UI.button(14, P.safeTop + 26, 72, 52, '←', { color: '#3a4356', txtColor: '#fff', fontSize: 30, disabled: modal })) { DG.Main.go('home'); return; }
-      var by = UI.currencyBar([
-        { icon: 'ui_coin', txt: U.fmt(s.coin), tip: '金币：商店升级 / 局前补给' },
-        { icon: 'ui_gem', txt: U.fmt(s.gem), tip: '星钻：开盲盒 / 复活 / 转盘' },
-        { icon: 'ui_dust', txt: U.fmt(s.dust), tip: '星尘：重复藏品/化石分解所得，去盲盒页兑换' },
-        { icon: 'ui_ticket', txt: '' + s.ticket, tip: '转盘券：免费转1次转盘' }
-      ], 98);
+      // 顶栏四格全局统一（和首页完全一致）；星尘是专用材料，只在盲盒页显示
+      var by = UI.currencyBar(DG.D.topBar(s), 98);
       DG.PAY.gemHotspot(98);
       var tw = (P.W - 40) / 6;
       for (var i = 0; i < TABS.length; i++) {
@@ -239,7 +235,8 @@ var DG = typeof GameGlobal !== 'undefined' ? (GameGlobal.DG = GameGlobal.DG || {
       var pityRemain = D.pity.ssr - s.pityBox;
       var hot = pityRemain <= 3;
       UI.bar(40, top + 4, P.W - 80, 26, s.pityBox / D.pity.ssr, hot ? '#ffb02e' : UI.C.purple, 'SSR保底 ' + s.pityBox + '/' + D.pity.ssr + (hot ? ' 🔥' : ''));
-      UI.label(P.W / 2, top + 48, '🔑×' + s.boxkey + ' · N58% R30% SR10% SSR2% · 25抽硬保底', { size: 19, align: 'center', color: UI.C.dim });
+      // 星尘只在这里露出：它就是在这页因重复藏品产生、也在这页消耗
+      UI.label(P.W / 2, top + 48, '✨星尘 ' + U.fmt(s.dust) + ' · N58% R30% SR10% SSR2% · 25抽硬保底', { size: 19, align: 'center', color: UI.C.dim });
       if (UI.button(40, top + 68, (P.W - 100) / 2, 70, '开1个 (🔑1)', { fontSize: 28, disabled: s.boxkey < 1 || busy })) { s.boxkey--; startCase(rollBox()); }
       if (UI.button(60 + (P.W - 100) / 2, top + 68, (P.W - 100) / 2, 70, '开1个 (💎' + D.boxCost.gem + ')', { color: '#5a4a8f', txtColor: '#fff', fontSize: 28, disabled: busy })) {
         if (s.gem >= D.boxCost.gem) { s.gem -= D.boxCost.gem; startCase(rollBox()); }
