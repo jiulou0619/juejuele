@@ -7,6 +7,31 @@ var DG = typeof GameGlobal !== 'undefined' ? (GameGlobal.DG = GameGlobal.DG || {
   var boxResult = null;      // 开盒结果 {item,isNew,dust}
   var boxAnim = null;        // CSGO式开箱滚动动画
   var puzzleShow = null;     // 拼图完成后的整图展示悬浮
+  var dustOpen = false;      // 星尘兑换所弹层
+  var dustPick = null;       // 兑换二次确认 {item, cost}
+
+  /* 本周键：定向补件按自然周限量，不需要额外的重置系统 */
+  function weekKey() {
+    var t = new Date();
+    var d = new Date(t.getFullYear(), t.getMonth(), t.getDate() - ((t.getDay() + 6) % 7));
+    return '' + d.getFullYear() + (d.getMonth() + 1) + d.getDate();
+  }
+  function dustWeekLeft(s) {
+    if (s.dustWeekKey !== weekKey()) { s.dustWeekKey = weekKey(); s.dustWeekN = 0; }
+    return DG.D.dust.weekCap - (s.dustWeekN || 0);
+  }
+  /* 该套里玩家最接近、最该补的一件（用于重复弹窗的"还差多少"指引） */
+  function nextTarget(s, set) {
+    var D = DG.D, own = 0, best = null;
+    for (var i = 0; i < 8; i++) {
+      if (s.col[set.id + '_' + i]) { own++; continue; }
+      var rar = D.rarOfIdx(i);
+      if (rar === 'SSR') continue;                 // SSR不上架定向
+      var cost = D.dust.price[rar];
+      if (!best || cost < best.cost) best = { idx: i, rar: rar, cost: cost, name: set.items[i][0], set: set };
+    }
+    return own >= 2 ? best : null;                 // 该套需已有≥2件才解锁兑换
+  }
   var codexPage = 0;         // 图鉴翻页页码
   var wheel = { ang: 0, spinning: false, t: 0, dur: 0, from: 0, to: 0, targetIdx: -1, result: null };
 
@@ -163,7 +188,7 @@ var DG = typeof GameGlobal !== 'undefined' ? (GameGlobal.DG = GameGlobal.DG || {
   }
 
   DG.Main.scene('meta', {
-    enter: function (arg) { tab = arg || 'shop'; boxResult = null; boxAnim = null; puzzleShow = null; codexPage = 0; wheel.spinning = false; wheel.result = null; },
+    enter: function (arg) { tab = arg || 'shop'; boxResult = null; boxAnim = null; puzzleShow = null; dustOpen = false; dustPick = null; codexPage = 0; wheel.spinning = false; wheel.result = null; },
 
     frame: function (dt, ctx) {
       var s = DG.SAVE.d;
@@ -175,7 +200,7 @@ var DG = typeof GameGlobal !== 'undefined' ? (GameGlobal.DG = GameGlobal.DG || {
         ctx.fillRect(-4, -4, P.W + 8, P.H + 8);
       }
       // 返回键在最左，货币栏右移让位（修遮挡bug）
-      var modal = (tab === 'box' && (!!boxResult || !!boxAnim)) || (tab === 'puzzle' && !!puzzleShow);
+      var modal = (tab === 'box' && (!!boxResult || !!boxAnim || dustOpen)) || (tab === 'puzzle' && !!puzzleShow);
       if (UI.button(14, P.safeTop + 26, 72, 52, '←', { color: '#3a4356', txtColor: '#fff', fontSize: 30, disabled: modal })) { DG.Main.go('home'); return; }
       // 顶栏四格全局统一（和首页完全一致）；星尘是专用材料，只在盲盒页显示
       var by = UI.currencyBar(DG.D.topBar(s), 98);
@@ -230,7 +255,7 @@ var DG = typeof GameGlobal !== 'undefined' ? (GameGlobal.DG = GameGlobal.DG || {
     /* ================= 盲盒 ================= */
     box: function (ctx, top, dt) {
       var s = DG.SAVE.d, D = DG.D;
-      var busy = !!boxResult || !!boxAnim;
+      var busy = !!boxResult || !!boxAnim || dustOpen;
       // SSR保底进度条（goal-gradient：离终点越近越想走完）
       var pityRemain = D.pity.ssr - s.pityBox;
       var hot = pityRemain <= 3;
@@ -242,7 +267,13 @@ var DG = typeof GameGlobal !== 'undefined' ? (GameGlobal.DG = GameGlobal.DG || {
         if (s.gem >= D.boxCost.gem) { s.gem -= D.boxCost.gem; startCase(rollBox()); }
         else DG.PAY.show('box', D.boxCost.gem - s.gem); // 钻石不足→直接开收银台
       }
-      var yy = top + 152;
+      // 星尘兑换所入口（星尘唯一出口，就开在它产生的地方）
+      var dLeft = dustWeekLeft(s);
+      if (UI.button(40, top + 146, P.W - 80, 56, '✨ 星尘兑换所  ' + U.fmt(s.dust), {
+        color: UI.C.panel2, fontSize: 23, disabled: busy,
+        sub: dLeft > 0 ? '补齐缺的藏品 · 本周可兑 ' + dLeft + ' 件' : '本周额度已用完 · 仍可淬火钻头'
+      })) dustOpen = true;
+      var yy = top + 214;
       // 保底走廊：差≤5抽 → 一键冲底"必出SSR"（冲刺8折48/抽，先耗手里的券）
       if (pityRemain <= D.iap.pityKeyWindow && s.boxCount > 0) {
         var needKeys = Math.max(0, pityRemain - s.boxkey);
@@ -336,7 +367,18 @@ var DG = typeof GameGlobal !== 'undefined' ? (GameGlobal.DG = GameGlobal.DG || {
         UI.label(P.W / 2, byy + 50, it.rar + (boxResult.isNew ? '  ✨NEW✨' : '  (重复)'), { size: 34, bold: true, align: 'center', color: rc.color });
         UI.glyph(ctx, it.glyph, P.W / 2, byy + 180, 130);
         UI.label(P.W / 2, byy + 290, '【' + it.set.name + '】' + it.name, { size: 30, bold: true, align: 'center', color: '#fff' });
-        UI.label(P.W / 2, byy + 334, boxResult.isNew ? ('词条: ' + it.set.statName + '+' + rc.pct * (it.set.stat === 'durMax' ? 2 : 1) + (it.set.unit || '')) : ('分解 → ✨星尘+' + boxResult.dust), { size: 24, align: 'center', color: UI.C.dim });
+        if (boxResult.isNew) {
+          UI.label(P.W / 2, byy + 334, '词条: ' + it.set.statName + '+' + rc.pct * (it.set.stat === 'durMax' ? 2 : 1) + (it.set.unit || ''), { size: 24, align: 'center', color: UI.C.dim });
+        } else {
+          // 重复不再是终点：把星尘换算成"离补齐下一件还差多少"，每一次重复都成为刻度
+          UI.label(P.W / 2, byy + 328, '分解 → ✨星尘+' + boxResult.dust, { size: 24, align: 'center', color: UI.C.dim });
+          var tg = nextTarget(s, it.set);
+          if (tg) {
+            var need = Math.max(0, tg.cost - s.dust);
+            UI.label(P.W / 2, byy + 362, need > 0 ? ('距兑换【' + tg.name + '】还差 ✨' + U.fmt(need)) : ('✨ 可兑换【' + tg.name + '】了!'), { size: 21, align: 'center', color: need > 0 ? UI.C.blue : UI.C.green, maxW: bw - 40 });
+            UI.bar(bx + 60, byy + 382, bw - 120, 14, Math.min(1, s.dust / tg.cost), need > 0 ? UI.C.blue : UI.C.green);
+          }
+        }
         if (boxResult.multi) UI.label(P.W / 2, byy + 364, boxResult.multi, { size: 20, align: 'center', color: '#8fd0ff' });
         if (UI.button(bx + 30, byy + bh - 162, (bw - 80) / 2, 60, '再开 (🔑' + s.boxkey + ')', { fontSize: 23, disabled: s.boxkey < 1 })) { s.boxkey--; boxResult = null; startCase(rollBox()); }
         if (UI.button(bx + bw / 2 + 10, byy + bh - 162, (bw - 80) / 2, 60, '再开 (💎' + D.boxCost.gem + ')', { color: '#5a4a8f', txtColor: '#fff', fontSize: 23 })) {
@@ -347,6 +389,102 @@ var DG = typeof GameGlobal !== 'undefined' ? (GameGlobal.DG = GameGlobal.DG || {
       }
       // 开箱滚动动画（最后画，盖住一切）
       if (boxAnim) drawCase(ctx, dt);
+      if (dustOpen) this.dustShop(ctx);
+    },
+
+    /* ================= 星尘兑换所 =================
+     * 星尘唯一的消耗出口。三段：定向补件(N/R/SR) / SSR自选券 / 钻头淬火永久轨。 */
+    dustShop: function (ctx) {
+      var s = DG.SAVE.d, D = DG.D, P2 = P;
+      UI.dim(0.86);
+      var x = 26, w = P.W - 52, y = P.safeTop + 30, h = P.H - y - 46;
+      UI.panel(x, y, w, h);
+      UI.label(P.W / 2, y + 46, '星 尘 兑 换 所', { size: 34, bold: true, align: 'center', color: UI.C.gold });
+      UI.label(P.W / 2, y + 84, '✨ ' + U.fmt(s.dust) + '  ·  本周还可兑换 ' + Math.max(0, dustWeekLeft(s)) + ' 件', { size: 22, align: 'center', color: UI.C.dim });
+
+      // ---- 二次确认层 ----
+      if (dustPick) {
+        var p = dustPick;
+        UI.dim(0.6);
+        var cw = P.W - 120, cx = 60, chh = 430, cy = Math.floor((P.H - chh) / 2);
+        UI.panel(cx, cy, cw, chh);
+        UI.label(P.W / 2, cy + 54, p.title, { size: 30, bold: true, align: 'center', color: UI.C.txt, maxW: cw - 40 });
+        if (p.glyph) UI.glyph(ctx, p.glyph, P.W / 2, cy + 150, 110);
+        UI.label(P.W / 2, cy + 240, p.sub, { size: 23, align: 'center', color: UI.C.blue, maxW: cw - 50 });
+        var afford = s.dust >= p.cost;
+        UI.label(P.W / 2, cy + 286, afford ? ('✨ ' + U.fmt(p.cost)) : ('还差 ✨' + U.fmt(p.cost - s.dust)), { size: 27, bold: true, align: 'center', color: afford ? UI.C.gold : UI.C.red });
+        if (UI.button(cx + 26, cy + chh - 92, (cw - 78) / 2, 64, '确认兑换', { fontSize: 25, disabled: !afford })) { p.go(); dustPick = null; }
+        if (UI.button(cx + cw / 2 + 13, cy + chh - 92, (cw - 78) / 2, 64, '再想想', { color: UI.C.panel2, fontSize: 25 })) dustPick = null;
+        return;
+      }
+
+      var listTop = y + 108, listH = h - 108 - 84;
+      var rowH = 150, secH = 190;
+      var contentH = D.sets.length * rowH + secH + 40;
+      UI.scroll('dustshop', x + 10, listTop, w - 20, listH, contentH, function () {
+        var cy2 = listTop;
+        // ---- 定向补件：每套一行，只列未拥有的 N/R/SR ----
+        for (var si = 0; si < D.sets.length; si++) {
+          var set = D.sets[si], ownN = setOwnedCount(set);
+          UI.label(x + 32, cy2 + 24, set.name + '  ' + ownN + '/8', { size: 23, bold: true, color: ownN >= 2 ? UI.C.txt : UI.C.dim });
+          if (ownN < 2) {
+            UI.label(x + w - 32, cy2 + 24, '需先拥有2件', { size: 19, align: 'right', color: UI.C.dim });
+          }
+          var bx2 = x + 30, n = 0;
+          for (var i = 0; i < 8; i++) {
+            var id = set.id + '_' + i;
+            if (s.col[id]) continue;
+            var rar = D.rarOfIdx(i);
+            if (rar === 'SSR') continue;           // SSR不上架定向
+            if (n >= 4) break;
+            var cost = D.dust.price[rar];
+            var bought = !!s.dustBuy[id];
+            var can = ownN >= 2 && !bought && dustWeekLeft(s) > 0 && s.dust >= cost;
+            var bw2 = (w - 76) / 4;
+            (function (set2, i2, id2, rar2, cost2) {
+              if (UI.button(bx2, cy2 + 44, bw2 - 8, 88, bought ? '已兑' : ('✨' + cost2), {
+                color: can ? null : UI.C.panel2, fontSize: 21, disabled: !can,
+                sub: bought ? null : rar2
+              })) {
+                dustPick = {
+                  title: '【' + set2.name + '】' + set2.items[i2][0],
+                  glyph: set2.items[i2][1], cost: cost2,
+                  sub: rar2 + ' · 词条 ' + set2.statName + '+' + D.rarCfg[rar2].pct + (set2.unit || ''),
+                  go: function () {
+                    s.dust -= cost2; s.col[id2] = 1; s.dustBuy[id2] = 1; s.dustWeekN = (s.dustWeekN || 0) + 1;
+                    checkSetDone(set2); D.calcBonuses(); DG.SAVE.save();
+                    boxResult = { item: { id: id2, name: set2.items[i2][0], glyph: set2.items[i2][1], rar: rar2, set: set2 }, isNew: true, dust: 0, rar: rar2 };
+                    dustOpen = false;
+                    DG.A.sfx('box_open', { vibrate: true, strong: true });
+                  }
+                };
+              }
+            })(set, i, id, rar, cost);
+            bx2 += bw2; n++;
+          }
+          if (!n) UI.label(x + 32, cy2 + 84, '✅ 本套 N/R/SR 已收齐', { size: 20, color: UI.C.green });
+          cy2 += rowH;
+        }
+        // ---- SSR自选券 + 钻头淬火 ----
+        var ssrLeft = D.dust.ssrCap - (s.dustSsrN || 0);
+        UI.label(x + 32, cy2 + 22, 'SSR自选券  (终身限' + D.dust.ssrCap + '次，剩' + Math.max(0, ssrLeft) + ')', { size: 23, bold: true, color: UI.C.txt });
+        if (UI.button(x + 30, cy2 + 42, w - 60, 62, '✨' + D.dust.ssrTicket + ' 换 SSR自选券', { fontSize: 24, disabled: ssrLeft <= 0 || s.dust < D.dust.ssrTicket })) {
+          dustPick = {
+            title: 'SSR 自选券', glyph: '👑', cost: D.dust.ssrTicket,
+            sub: '使用后从未拥有的SSR中获得1件',
+            go: function () { s.dust -= D.dust.ssrTicket; s.ssrTicket = (s.ssrTicket || 0) + 1; s.dustSsrN = (s.dustSsrN || 0) + 1; DG.SAVE.save(); DG.FX.banner('✨ SSR自选券 ×1', { color: UI.C.gold, size: 44, pri: true }); }
+          };
+        }
+        var lv = s.drillLv || 0, dp = D.dust.drill;
+        UI.label(x + 32, cy2 + 130, '钻头淬火  Lv.' + lv + '/' + dp.length + '  (耐久上限+2/级)', { size: 23, bold: true, color: UI.C.txt });
+        if (UI.button(x + 30, cy2 + 150, w - 60, 62, lv >= dp.length ? 'MAX' : ('✨' + dp[lv] + ' 升到 Lv.' + (lv + 1)), { fontSize: 24, disabled: lv >= dp.length || s.dust < dp[lv] })) {
+          s.dust -= dp[lv]; s.drillLv = lv + 1; D.calcBonuses(); DG.SAVE.save();
+          DG.A.sfx('buy', { vibrate: true });
+          DG.FX.banner('⛏ 钻头淬火 Lv.' + s.drillLv, { color: UI.C.green, size: 42 });
+        }
+      });
+      UI.label(P.W / 2, y + h - 78, 'SSR藏品无法定向兑换，仅限盲盒开出', { size: 19, align: 'center', color: UI.C.dim });
+      if (UI.button(P.W / 2 - 120, y + h - 62, 240, 54, '关闭', { color: UI.C.panel2, fontSize: 25 })) dustOpen = false;
     },
 
     /* ================= 图鉴（矿物Tab） ================= */

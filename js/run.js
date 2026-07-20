@@ -280,7 +280,12 @@ var DG = typeof GameGlobal !== 'undefined' ? (GameGlobal.DG = GameGlobal.DG || {
         var ft = DG.D.fossilTiers[fo.tier];
         var isNewF = !s.fossils[fo.id];
         s.fossils[fo.id] = (s.fossils[fo.id] || 0) + 1;
-        if (isNewF) s.gem += ft.gem; else s.dust += ft.dust;
+        if (isNewF) s.gem += ft.gem;
+        else { // 重复化石：星尘每日封顶，超出转等值金币（否则刷浅层化石可日产1500+，所有定价失效）
+          var fc = s.daily.fossilDust || 0;
+          if (fc < DG.D.dust.fossilDailyCap) { s.dust += ft.dust; s.daily.fossilDust = fc + ft.dust; }
+          else gainCoin(ft.dust * 3, e.x, e.y, 'fossil');
+        }
         DG.FX.banner('🦴 ' + fo.name, { color: ft.color, size: 48, life: 1.8, pri: true });
         DG.FX.text(e.x, e.y - 54, isNewF ? '✨NEW +' + ft.gem + '💎' : '重复 → ✨+' + ft.dust, { color: ft.color, size: 30, life: 1.4 });
         DG.FX.spr(e.x, e.y, fo.id, 300, 1.1);

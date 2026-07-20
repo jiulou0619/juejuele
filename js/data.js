@@ -491,6 +491,19 @@ var DG = typeof GameGlobal !== 'undefined' ? (GameGlobal.DG = GameGlobal.DG || {
   ];
   D.ticketCoinCost = 800; // 金币购转盘券（日限1）
 
+  /* ================= 星尘兑换所 =================
+   * 星尘=重复藏品/化石分解所得，是"抽到重复"的情绪补偿。定价原则：
+   * 只能补 N/R/SR，SSR 永不上架定向（否则击穿 60星钻=1盲盒 的付费锚点）；
+   * SSR自选券可换但终身限2次——用配额挡而不是用价格挡，星尘永远无法独立完成SSR收集线。 */
+  D.dust = {
+    price: { N: 500, R: 1000, SR: 1800 },   // 定向补件（每件终身1次，每周限2件，该套需已有≥2件）
+    weekCap: 2,
+    ssrTicket: 3600, ssrCap: 2,             // SSR自选券：终身2次
+    wish: 600,                              // 许愿矿灯第三轨（与广告/星钻共用每日1次门）
+    drill: [500, 700, 900, 1200, 1500, 1900, 2400, 3000], // 钻头淬火8级：耐久上限+2/级，星尘的终局归宿
+    fossilDailyCap: 300                     // 产出侧收口：重复化石每日最多产300星尘（超出转等值金币）
+  };
+
   /* 顶部货币栏：全局唯一定义，首页/二级页共用，避免同一格位显示不同货币 */
   D.topBar = function (s) {
     return [
@@ -668,6 +681,7 @@ var DG = typeof GameGlobal !== 'undefined' ? (GameGlobal.DG = GameGlobal.DG || {
   D.calcBonuses = function () {
     var s = DG.SAVE.d;
     var B = { coinPct: 0, durMax: 0, depthPct: 0, feverDur: 0, comboWin: 0, powerPct: 0, feverChargePct: 0, luckPct: 0, pieceRate: 0, oreRate: 0 };
+    B.durMax += (s.drillLv || 0) * 2;   // 钻头淬火（星尘永久轨）
     var i;
     // 商店
     for (i = 0; i < D.shop.length; i++) {
@@ -734,6 +748,7 @@ var DG = typeof GameGlobal !== 'undefined' ? (GameGlobal.DG = GameGlobal.DG || {
       v: 1,
       opt: { bgm: 1, sfx: 1, bgmVol: 0.3, sfxVol: 0.3 }, // 音量0~1，默认30%；0=静音
       supplies: {},                                      // 已购局前补给（下局消耗）
+      dustBuy: {}, dustWeekKey: '', dustWeekN: 0, dustSsrN: 0, drillLv: 0, // 星尘兑换所
       coin: 0, gem: 0, boxkey: 0, dust: 0, piece: 0, ticket: 0, ssrTicket: 0,
       runCount: 0, cumM: 0, bestM: 0, bestScore: 0, days: 1, lastDay: 0, yesterM: 0,
       signDay: 0,             // 已签到天数(0~7)
