@@ -24,6 +24,7 @@ var DG = typeof GameGlobal !== 'undefined' ? (GameGlobal.DG = GameGlobal.DG || {
     ctx.fillStyle = DG.UI.C.bg;
     ctx.fillRect(-20, -20, P.W + 40, P.H + 40);
 
+    if (P.events.length) DG.A.startBgm(); // 首次点按启动BGM(浏览器自动播放策略；失败自动重试)
     DG.UI.begin(dt);
     DG.PAY.begin();                 // 充值弹层开启时独占输入
     if (M.cur && M.cur.frame) M.cur.frame(dt, ctx);
@@ -38,6 +39,7 @@ var DG = typeof GameGlobal !== 'undefined' ? (GameGlobal.DG = GameGlobal.DG || {
   M.boot = function () {
     DG.SAVE.load();
     DG.A.preload();
+    DG.A.startBgm(); // 微信端可直接播；浏览器端等首次点按
     M.go('home');
     requestAnimationFrame(loop);
   };

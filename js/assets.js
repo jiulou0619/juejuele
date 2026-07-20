@@ -88,6 +88,38 @@ var DG = typeof GameGlobal !== 'undefined' ? (GameGlobal.DG = GameGlobal.DG || {
     } catch (e) {}
   };
 
+  /* ---------- BGM：4首顺序播放，放完循环回第1首 ---------- */
+  A.bgmFiles = ['bgm_1.mp3', 'bgm_2.mp3', 'bgm_3.mp3', 'bgm_4.mp3'];
+  var bgm = { idx: 0, cur: null, started: false };
+  function playBgmTrack(i) {
+    bgm.idx = ((i % A.bgmFiles.length) + A.bgmFiles.length) % A.bgmFiles.length;
+    var src = 'assets/sfx/' + A.bgmFiles[bgm.idx];
+    try {
+      if (hasWxAudio) {
+        if (!bgm.cur) {
+          bgm.cur = wx.createInnerAudioContext();
+          bgm.cur.onEnded(function () { playBgmTrack(bgm.idx + 1); });
+          bgm.cur.onError(function () { playBgmTrack(bgm.idx + 1); });
+        }
+        bgm.cur.src = src; bgm.cur.volume = 0.45; bgm.cur.play();
+      } else {
+        if (!bgm.cur) {
+          bgm.cur = new Audio();
+          bgm.cur.addEventListener('ended', function () { playBgmTrack(bgm.idx + 1); });
+          bgm.cur.addEventListener('error', function () { playBgmTrack(bgm.idx + 1); });
+        }
+        bgm.cur.src = src; bgm.cur.volume = 0.45;
+        var pr = bgm.cur.play();
+        if (pr && pr.catch) pr.catch(function () { bgm.started = false; }); // 浏览器需用户手势，失败下次点按重试
+      }
+    } catch (e) { bgm.started = false; }
+  }
+  A.startBgm = function () {
+    if (bgm.started) return;
+    bgm.started = true;
+    playBgmTrack(bgm.idx);
+  };
+
   /* ---------- 真实贴图清单（assets/ 下；加载完成前自动回退文字占位） ---------- */
   A.manifest = {
     block_red: 'block_red.png', block_blue: 'block_blue.png', block_green: 'block_green.png',
