@@ -210,7 +210,9 @@ var DG = typeof GameGlobal !== 'undefined' ? (GameGlobal.DG = GameGlobal.DG || {
     'down back next calendar chest puzzle shop book wheel gym bomb rocket magnet ruler stamina star bone ingot ' +
     'stone crown tag bag potion snow volcano meteor toxic repair friends hammer shovel compass map light leaf ' +
     'mountain ghost skull shield clock bell spark rank like sycee starcoin clover rainbow night sun heart wand ' +
-    'bookmark ring axe doc grid info cross gem2 plus mult music music_off target').split(' ');
+    'bookmark ring axe doc grid info cross gem2 plus mult music music_off target ' +
+    'wrench drill hit npc tv sword nail orb pear flower water link battery watch cat protect ' +
+    'adjust robot chip star6 star3 horn cart fog demon dagger saw capsule').split(' ');
   for (var ii = 0; ii < A.ICONS.length; ii++) A.manifest['ic_' + A.ICONS[ii]] = 'ic_' + A.ICONS[ii] + '.png';
 
   A.preload = function () {

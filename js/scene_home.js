@@ -71,7 +71,7 @@ var DG = typeof GameGlobal !== 'undefined' ? (GameGlobal.DG = GameGlobal.DG || {
         var mOn = DG.D.monthlyActive(s);
         var cart = Math.min(800, Math.round(s.yesterM)) * (mOn ? 2 : 1);
         s.coin += cart;
-        DG.FX.banner('🛒 隔夜矿车运回 🪙' + cart + '!' + (mOn ? ' (月卡×2)' : ' (昨日' + s.yesterM + 'm)'), { color: '#ffd76a', size: 40, life: 2.5 });
+        DG.FX.banner('🚚 隔夜矿车运回 🪙' + cart + '!' + (mOn ? ' (月卡×2)' : ' (昨日' + s.yesterM + 'm)'), { color: '#ffd76a', size: 40, life: 2.5 });
         DG.SAVE.save();
       }
       // 月卡每日星钻
