@@ -167,7 +167,7 @@ var DG = typeof GameGlobal !== 'undefined' ? (GameGlobal.DG = GameGlobal.DG || {
       }
       // 返回键在最左，货币栏右移让位（修遮挡bug）
       var modal = tab === 'box' && (!!boxResult || !!boxAnim);
-      if (UI.button(14, P.safeTop + 8, 72, 52, '←', { color: '#3a4356', txtColor: '#fff', fontSize: 30, disabled: modal })) { DG.Main.go('home'); return; }
+      if (UI.button(14, P.safeTop + 26, 72, 52, '←', { color: '#3a4356', txtColor: '#fff', fontSize: 30, disabled: modal })) { DG.Main.go('home'); return; }
       var by = UI.currencyBar([
         { icon: 'ui_coin', txt: U.fmt(s.coin) },
         { icon: 'ui_gem', txt: U.fmt(s.gem) },

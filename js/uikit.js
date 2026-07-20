@@ -296,7 +296,7 @@ var DG = typeof GameGlobal !== 'undefined' ? (GameGlobal.DG = GameGlobal.DG || {
 
   /* 顶部货币栏，返回栏高。x0=起始x(给返回键让位，防遮挡) */
   UI.currencyBar = function (items, x0) {
-    var ctx = P.ctx, y = P.safeTop + 8, h = 52;
+    var ctx = P.ctx, y = P.safeTop + 26, h = 52;
     if (x0 == null) x0 = 20;
     var w = Math.min(220, (P.W - x0 - 20) / items.length - 10);
     for (var i = 0; i < items.length; i++) {

@@ -60,7 +60,7 @@ var DG = typeof GameGlobal !== 'undefined' ? (GameGlobal.DG = GameGlobal.DG || {
     var P = DG.P, UI = DG.UI;
     if (P.ios) return false; // iOS 不展示充值入口
     var w = Math.min(220, (P.W - x0 - 20) / 4 - 10);
-    var x = x0 + (w + 10), y = P.safeTop + 8, h = 52;
+    var x = x0 + (w + 10), y = P.safeTop + 26, h = 52;
     UI.label(x + w - 13, y + h / 2 + 1, '＋', { size: 26, bold: true, align: 'center', color: '#8fd0ff' });
     if (UI.tap && U.inRect(UI.tap.x, UI.tap.y, x, y, w, h)) { UI.tap = null; PAY.show('bar'); return true; }
     return false;
