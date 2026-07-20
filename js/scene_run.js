@@ -640,7 +640,7 @@ var DG = typeof GameGlobal !== 'undefined' ? (GameGlobal.DG = GameGlobal.DG || {
       var ni = sD.signDay % 7;
       var preLine = !sD.daily.signed
         ? '📅 还没签到 · 回基地领 ' + DG.D.signin7[ni].txt
-        : '🌙 明日 ' + tm.name + ' · 签到D' + (ni + 1) + ' · 首局又×2';
+        : '🌙 明日 ' + tm.name + ' · 可签第' + (ni + 1) + '天 · 首局又×2';
       UI.label(P.W / 2, cy + 12, preLine, { size: 21, align: 'center', color: (!sD.daily.signed || ni === 3 || ni === 6) ? '#ffd76a' : UI.C.dim, maxW: P.W - 90 });
       // ---- 面板下方：两个大按钮 ----
       var btnY = Math.min(y + estH + 14, P.H - btnH - 16);

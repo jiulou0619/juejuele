@@ -218,7 +218,10 @@ var DG = typeof GameGlobal !== 'undefined' ? (GameGlobal.DG = GameGlobal.DG || {
         // 签到
         var canSign = !s.daily.signed;
         var signIdx = s.signDay % 7;
-        if (UI.button(P.W - 288, dy + 16, 234, 60, canSign ? '签到 D' + (signIdx + 1) : '✅ 已签到', { fontSize: 23, disabled: !canSign, sub: canSign ? DG.D.signin7[signIdx].txt : null })) {
+        if (UI.button(P.W - 288, dy + 16, 234, 64, canSign ? '签到' : '✅ 已签到', {
+          fontSize: 24, disabled: !canSign,
+          sub: canSign ? '第' + (signIdx + 1) + '天 · ' + DG.D.signin7[signIdx].txt : '明天再来'
+        })) {
           s.daily.signed = true;
           var give = DG.D.signin7[signIdx];
           DG.Run.grantGive(give.give);
