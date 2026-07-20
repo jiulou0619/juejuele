@@ -487,7 +487,7 @@ var DG = typeof GameGlobal !== 'undefined' ? (GameGlobal.DG = GameGlobal.DG || {
     { w: 15, txt: '星尘×40', glyph: '✨', img: 'wp_dust', give: { dust: 40 } },
     { w: 6,  txt: '转盘券', glyph: '🎫', img: 'wp_ticket', give: { ticket: 1 } },
     { w: 12, txt: '金币×600', glyph: '💰', img: 'wp_gold', give: { coin: 600 } },
-    { w: 5,  txt: '大奖!', glyph: '💣', img: 'wp_bomb', give: { boxkey: 3, gem: 60 } }
+    { w: 5,  txt: '大奖 盲盒券×3+星钻60', glyph: '👑', img: 'wp_jackpot', give: { boxkey: 3, gem: 60 } }
   ];
   D.ticketCoinCost = 800; // 金币购转盘券（日限1）
 

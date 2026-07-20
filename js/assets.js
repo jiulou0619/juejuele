@@ -202,6 +202,7 @@ var DG = typeof GameGlobal !== 'undefined' ? (GameGlobal.DG = GameGlobal.DG || {
     logo: 'logo.png', wheel_face: 'wheel_face.png', wheel_blank: 'wheel_blank.png',
     wp_coin: 'wp_coin.png', wp_gem: 'wp_gem.png', wp_bomb: 'wp_bomb.png', wp_gold: 'wp_gold.png',
     wp_ticket: 'wp_ticket.png', wp_dust: 'wp_dust.png', wp_puzzle: 'wp_puzzle.png', wp_boxkey: 'wp_boxkey.png',
+    wp_jackpot: 'wp_jackpot.png',
     chest_closed: 'chest_closed.png', chest_open: 'chest_open.png',
     dog_corgi: 'dog_corgi.png', dog_dachs: 'dog_dachs.png', dog_bulldog: 'dog_bulldog.png', dog_schnauzer: 'dog_schnauzer.png',
     ui_exit_badge: 'ui_exit_badge.png',

@@ -174,10 +174,9 @@ var DG = typeof GameGlobal !== 'undefined' ? (GameGlobal.DG = GameGlobal.DG || {
           var sit = DG.D.supplies[sp];
           var sx3 = 30 + sp * (scw + 12);
           var on = !!s.supplies[sit.id];
-          if (UI.button(sx3, sy + 116, scw, 64, sit.name, { color: on ? null : UI.C.panel2, fontSize: 21, glyph: sit.icon, sub: on ? '✓ 已备好·点击退' : '🪙' + sit.cost })) {
-            if (on) { delete s.supplies[sit.id]; s.coin += sit.cost; }
-            else if (s.coin >= sit.cost) { s.coin -= sit.cost; s.supplies[sit.id] = 1; DG.A.sfx('buy', { vibrate: true }); DG.FX.text(sx3 + scw / 2, sy + 104, sit.desc, { color: '#8fd0ff', size: 24 }); }
-            else DG.FX.text(sx3 + scw / 2, sy + 104, '金币不足', { color: '#ff9f4a', size: 24 });
+          if (UI.button(sx3, sy + 116, scw, 64, sit.name, { color: on ? null : UI.C.panel2, fontSize: 21, glyph: sit.icon, sub: on ? '✓ 已备好' : '🪙' + sit.cost, disabled: on })) {
+            if (s.coin >= sit.cost) { s.coin -= sit.cost; s.supplies[sit.id] = 1; DG.A.sfx('buy', { vibrate: true }); DG.FX.text(sx3 + scw / 2, sy + 104, sit.desc, { color: UI.C.blue, size: 24 }); }
+            else DG.FX.text(sx3 + scw / 2, sy + 104, '金币不足', { color: UI.C.red, size: 24 });
             DG.SAVE.save();
           }
         }
