@@ -168,9 +168,10 @@ var DG = typeof GameGlobal !== 'undefined' ? (GameGlobal.DG = GameGlobal.DG || {
     fx_pop_s: 'fx_pop_s.png', fx_pop_m: 'fx_pop_m.png', fx_blast: 'fx_blast.png',
     fx_dirt: 'fx_dirt.png', fx_rainbow_s: 'fx_rainbow_s.png', fx_rainbow_l: 'fx_rainbow_l.png',
     fx_fever_frame: 'fx_fever_frame.png', fx_lava_strip: 'fx_lava_strip.png',
-    ui_coin: 'ui_coin2.png', ui_gem: 'ui_gem2.png', ui_key: 'ui_key2.png', ui_ticket: 'ui_ticket2.png',
-    ui_fire: 'ui_fire.png', ui_flag: 'ui_flag.png', ui_trophy: 'ui_trophy.png', ui_share: 'ui_share.png',
-    ui_dust: 'ui_dust.png', ui_puzzle: 'ui_puzzle.png', ui_energy: 'ui_energy.png',
+    // 货币/HUD 图标统一走 ic_ 图标集（同一套线条与描边，避免新旧两批混用）
+    ui_coin: 'ic_coin.png', ui_gem: 'ic_gem.png', ui_key: 'ic_key.png', ui_ticket: 'ic_ticket.png',
+    ui_fire: 'ic_fire.png', ui_flag: 'ic_flag.png', ui_trophy: 'ic_trophy.png', ui_share: 'ic_share.png',
+    ui_dust: 'ic_spark.png', ui_puzzle: 'ic_puzzle.png', ui_energy: 'ic_pick.png',
     logo: 'logo.png', wheel_face: 'wheel_face.png', wheel_blank: 'wheel_blank.png',
     wp_coin: 'wp_coin.png', wp_gem: 'wp_gem.png', wp_bomb: 'wp_bomb.png', wp_gold: 'wp_gold.png',
     wp_ticket: 'wp_ticket.png', wp_dust: 'wp_dust.png', wp_puzzle: 'wp_puzzle.png', wp_boxkey: 'wp_boxkey.png',

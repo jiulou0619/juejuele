@@ -104,6 +104,7 @@ var DG = typeof GameGlobal !== 'undefined' ? (GameGlobal.DG = GameGlobal.DG || {
     else hu = (r - g) / d + 4;
     hu *= 60;
     if (hu < 20 || hu >= 330) return 'red';
+    if (hu < 50) return UI.VU.primary;   // 橙金系一律走主按钮色，避免同屏三种黄
     if (hu < 70) return 'yellow';
     if (hu < 160) return 'green';
     if (hu < 250) return 'blue';
@@ -112,7 +113,8 @@ var DG = typeof GameGlobal !== 'undefined' ? (GameGlobal.DG = GameGlobal.DG || {
 
   /* 按钮（Vector UI 矢量卡通底座）。返回 true=本帧被点。
    * opts.color 语义：主按钮不传；深灰/rgba=次要；其他色自动匹配同色系贴图 */
-  UI.VU = { primary: 'yellow', secondary: 'black' };
+  /* 主按钮=暖沙(cream)：矿洞题材里比亮黄耐看，且与金色Logo/金币不撞；次要=暖深棕 */
+  UI.VU = { primary: 'cream', secondary: 'black' };
   UI.button = function (x, y, w, h, label, opts) {
     opts = opts || {};
     var ctx = P.ctx;
@@ -201,10 +203,13 @@ var DG = typeof GameGlobal !== 'undefined' ? (GameGlobal.DG = GameGlobal.DG || {
         ctx.fillText(opts.sub, x + w / 2, y + h / 2 + fs * 0.55, w - 16);
       }
     }
-    if (opts.badge) {
-      ctx.fillStyle = UI.C.red;
-      ctx.beginPath(); ctx.arc(x + w - 8, y + 8, 12, 0, Math.PI * 2); ctx.fill();
+    if (opts.badge) { // 暖红徽章（玫瑰红做小圆点会显糖果粉，这里单独用锈红）
+      ctx.fillStyle = '#d9452f';
+      ctx.beginPath(); ctx.arc(x + w - 8, y + 8, 13, 0, Math.PI * 2); ctx.fill();
+      ctx.strokeStyle = 'rgba(0,0,0,0.55)'; ctx.lineWidth = 2.5;
+      ctx.beginPath(); ctx.arc(x + w - 8, y + 8, 13, 0, Math.PI * 2); ctx.stroke();
       ctx.font = 'bold 18px Xiaolai, sans-serif'; ctx.fillStyle = '#fff';
+      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
       ctx.fillText(typeof opts.badge === 'number' ? '' + opts.badge : '!', x + w - 8, y + 9);
     }
     ctx.restore();
