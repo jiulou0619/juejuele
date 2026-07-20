@@ -328,8 +328,13 @@ var DG = typeof GameGlobal !== 'undefined' ? (GameGlobal.DG = GameGlobal.DG || {
       }
       else if (e.ev === 'event') { triggerEvent(e.id); }
       else if (e.ev === 'puzzle_piece') {
-        s.piece++;
-        DG.FX.banner('🧩 拼图碎片 +1', { color: '#8fd0ff', size: 52 });
+        if (s.puzzleDone >= DG.D.puzzles.length) {
+          gainCoin(200, null, null, 'puzzle');
+          DG.FX.banner('🧩 密室已通 → 🪙200', { color: '#8fd0ff', size: 44 });
+        } else {
+          s.piece++;
+          DG.FX.banner('🧩 拼图碎片 +1', { color: '#8fd0ff', size: 52 });
+        }
         codexFind('ev_puzzle');
         DG.SAVE.save();
       }
@@ -547,7 +552,11 @@ var DG = typeof GameGlobal !== 'undefined' ? (GameGlobal.DG = GameGlobal.DG || {
     if (res.coin) gainCoin(res.coin, null, null, 'chest');
     if (res.dur) { R.dur = Math.min(R.durMax, R.dur + res.dur); R.acc.dur += res.dur; R.acc.t = 0.6; }
     if (res.sp) { R.pendingSpecials.push(res.sp); placePendingSpecials(); }
-    if (res.piece) { DG.SAVE.d.piece += res.piece; DG.SAVE.save(); }
+    if (res.piece) {
+      if (DG.SAVE.d.puzzleDone >= DG.D.puzzles.length) { gainCoin(res.piece * 200, null, null, 'chest'); res.txt = '🪙' + res.piece * 200 + ' (拼图已全通)'; }
+      else DG.SAVE.d.piece += res.piece;
+      DG.SAVE.save();
+    }
     DG.FX.banner('📦 ' + res.txt, { color: '#ffd76a', size: 44, life: 1.5, pri: !!res.piece });
     DG.A.sfx('box_open', { vibrate: true });
   }
@@ -800,13 +809,18 @@ var DG = typeof GameGlobal !== 'undefined' ? (GameGlobal.DG = GameGlobal.DG || {
   /* 开局赠礼延时演出：等棋盘落定再把方块变成道具，玩家才看得见"哪一格变了" */
   R.armGiftFx = function (delay) { if (R.pendingSpecials.length) R.giftT = delay || 0.55; };
 
+  /* 拼图全通后，碎片产出全部折算成金币（转盘/宝箱/密室还在产，不能让它变成第二个死资源） */
+  var PIECE_COIN = 200;
+  function puzzleAllDone() { return DG.SAVE.d.puzzleDone >= DG.D.puzzles.length; }
+  R.puzzlePieceCoin = PIECE_COIN;
+
   function grantGive(g) {
     var s = DG.SAVE.d;
     if (g.coin) s.coin += g.coin;
     if (g.gem) s.gem += g.gem;
     if (g.boxkey) s.boxkey += g.boxkey;
     if (g.dust) s.dust += g.dust;
-    if (g.piece) s.piece += g.piece;
+    if (g.piece) { if (puzzleAllDone()) s.coin += g.piece * PIECE_COIN; else s.piece += g.piece; }
     if (g.ticket) s.ticket += g.ticket;
     if (g.ssrTicket) s.ssrTicket = (s.ssrTicket || 0) + g.ssrTicket;
     if (g.skin && s.skins.indexOf(g.skin) < 0) s.skins.push(g.skin);
@@ -818,7 +832,7 @@ var DG = typeof GameGlobal !== 'undefined' ? (GameGlobal.DG = GameGlobal.DG || {
     if (g.gem) out.push('💎' + g.gem);
     if (g.boxkey) out.push('🔑' + g.boxkey);
     if (g.dust) out.push('✨' + g.dust);
-    if (g.piece) out.push('🧩' + g.piece);
+    if (g.piece) out.push(puzzleAllDone() ? '🪙' + g.piece * PIECE_COIN : '🧩' + g.piece);
     if (g.ticket) out.push('🎫' + g.ticket);
     if (g.ssrTicket) out.push('SSR自选券');
     if (g.skin) out.push('皮肤!');

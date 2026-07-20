@@ -260,8 +260,8 @@ var DG = typeof GameGlobal !== 'undefined' ? (GameGlobal.DG = GameGlobal.DG || {
       var pityRemain = D.pity.ssr - s.pityBox;
       var hot = pityRemain <= 3;
       UI.bar(40, top + 4, P.W - 80, 26, s.pityBox / D.pity.ssr, hot ? '#ffb02e' : UI.C.purple, 'SSR保底 ' + s.pityBox + '/' + D.pity.ssr + (hot ? ' 🔥' : ''));
-      // 星尘只在这里露出：它就是在这页因重复藏品产生、也在这页消耗
-      UI.label(P.W / 2, top + 48, '✨星尘 ' + U.fmt(s.dust) + ' · N58% R30% SR10% SSR2% · 25抽硬保底', { size: 19, align: 'center', color: UI.C.dim });
+      // 星尘只在这里露出：它就是在这页因重复藏品产生、也在这页消耗；自选券持有时也在此提示
+      UI.label(P.W / 2, top + 48, '✨星尘 ' + U.fmt(s.dust) + (s.ssrTicket > 0 ? ' · 👑自选券×' + s.ssrTicket : '') + ' · N58% R30% SR10% SSR2%', { size: 19, align: 'center', color: UI.C.dim, maxW: P.W - 40 });
       if (UI.button(40, top + 68, (P.W - 100) / 2, 70, '开1个 (🔑1)', { fontSize: 28, disabled: s.boxkey < 1 || busy })) { s.boxkey--; startCase(rollBox()); }
       if (UI.button(60 + (P.W - 100) / 2, top + 68, (P.W - 100) / 2, 70, '开1个 (💎' + D.boxCost.gem + ')', { color: '#5a4a8f', txtColor: '#fff', fontSize: 28, disabled: busy })) {
         if (s.gem >= D.boxCost.gem) { s.gem -= D.boxCost.gem; startCase(rollBox()); }
@@ -782,7 +782,15 @@ var DG = typeof GameGlobal !== 'undefined' ? (GameGlobal.DG = GameGlobal.DG || {
         return;
       }
       if (s.puzzleDone >= D.puzzles.length) {
-        UI.label(P.W / 2, top + 100, '🎉 全部拼图已完成!', { size: 40, bold: true, align: 'center', color: '#ffd76a' });
+        // 库存里剩的碎片一次性折算成金币（之后所有碎片产出在入账时就直接转金币）
+        if (s.piece > 0) {
+          var pc = s.piece * DG.Run.puzzlePieceCoin;
+          s.coin += pc; s.piece = 0;
+          DG.SAVE.save();
+          DG.FX.banner('🧩 剩余碎片折算 🪙' + U.fmt(pc), { color: UI.C.gold, size: 44, pri: true });
+        }
+        UI.label(P.W / 2, top + 100, '🎉 全部拼图已完成!', { size: 40, bold: true, align: 'center', color: UI.C.gold });
+        UI.label(P.W / 2, top + 150, '之后获得的拼图碎片将自动折算为金币 (🪙' + DG.Run.puzzlePieceCoin + '/片)', { size: 21, align: 'center', color: UI.C.dim, maxW: P.W - 80 });
         return;
       }
       var pz = D.puzzles[s.puzzleDone];

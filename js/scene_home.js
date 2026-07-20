@@ -299,7 +299,7 @@ var DG = typeof GameGlobal !== 'undefined' ? (GameGlobal.DG = GameGlobal.DG || {
         }
         if (tabs[t].id === 'box' && s.boxkey > 0) badge = s.boxkey;
         if (tabs[t].id === 'wheel' && un && !s.daily.wheelFree) badge = '!';
-        if (tabs[t].id === 'puzzle' && s.piece > 0) badge = s.piece;
+        if (tabs[t].id === 'puzzle' && s.piece > 0 && s.puzzleDone < DG.D.puzzles.length) badge = s.piece;
         if (UI.button(tx, ty, bw, bh, un ? tabs[t].txt : '🔒' + tabs[t].txt, { color: un ? UI.C.panel2 : '#3a4356', glyph: un ? tabs[t].icon : null, fontSize: 26, badge: un ? badge : 0, sub: un ? null : tabs[t].lock, subColor: '#6a7288' })) {
           if (un) DG.Main.go('meta', tabs[t].id);
           else DG.FX.text(tx + bw / 2, ty - 10, tabs[t].lock, { color: '#ff9f4a', size: 24 });

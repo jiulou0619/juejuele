@@ -202,7 +202,9 @@ var DG = typeof GameGlobal !== 'undefined' ? (GameGlobal.DG = GameGlobal.DG || {
       if (!D._genState.evLayerDone[evKey] && into > Math.min(12, layerLen * 0.3)) {
         if (Math.random() < 0.05) {
           D._genState.evLayerDone[evKey] = 1;
-          var pool = ['ev_merchant', 'ev_gamble', 'ev_chest', 'ev_puzzle'];
+          // 拼图全通后密室事件退场（换成宝箱），不再产出无处可用的碎片事件
+          var allPz = DG.SAVE && DG.SAVE.d && DG.SAVE.d.puzzleDone >= D.puzzles.length;
+          var pool = ['ev_merchant', 'ev_gamble', 'ev_chest', allPz ? 'ev_chest' : 'ev_puzzle'];
           return D.makeBlock(U.pick(pool));
         }
       }
