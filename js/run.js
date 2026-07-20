@@ -274,7 +274,7 @@ var DG = typeof GameGlobal !== 'undefined' ? (GameGlobal.DG = GameGlobal.DG || {
         codexFind('fossil', e.x, e.y);
         // 每局化石出土上限：超过后只给金币，不再刷屏/攒星尘
         R.fossilN++;
-        if (R.fossilN > 8) { gainCoin(60, e.x, e.y, 'fossil'); continue; }
+        if (R.fossilN > 6) { gainCoin(60, e.x, e.y, 'fossil'); continue; }
         // 化石收藏：按深度roll品质（绿/紫/橙）
         var fo = DG.D.rollFossil(R.m);
         var ft = DG.D.fossilTiers[fo.tier];

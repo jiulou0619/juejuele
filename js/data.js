@@ -226,7 +226,7 @@ var DG = typeof GameGlobal !== 'undefined' ? (GameGlobal.DG = GameGlobal.DG || {
       if ((r -= poisonP) < 0) return D.makeBlock('poison');
       if ((r -= goldP) < 0) return D.makeBlock('gold');
       if ((r -= repairP) < 0) return D.makeBlock('repair');
-      if (m > 30 && (r -= 0.004) < 0) return D.makeBlock('fossil'); // 野生化石(30m+)，收藏可持续推进
+      if (m > 30 && (r -= 0.0025) < 0) return D.makeBlock('fossil'); // 野生化石(30m+)，收藏可持续推进
     }
     // 首局前24m只出3色 → 大组遍地=新手必爽
     var pool = s.colors;
@@ -486,11 +486,11 @@ var DG = typeof GameGlobal !== 'undefined' ? (GameGlobal.DG = GameGlobal.DG || {
 
   /* ================= 转盘（8格；空盘面旋转+图标固定正向叠加） ================= */
   D.wheel = [
-    { w: 30, txt: '金币×200', glyph: '🪙', img: 'wp_coin', give: { coin: 200 } },
+    { w: 32, txt: '金币×200', glyph: '🪙', img: 'wp_coin', give: { coin: 200 } },
     { w: 10, txt: '星钻×20', glyph: '💎', img: 'wp_gem', give: { gem: 20 } },
-    { w: 10, txt: '盲盒钥匙', glyph: '🔑', img: 'wp_boxkey', give: { boxkey: 1 } },
+    { w: 6, txt: '盲盒钥匙', glyph: '🔑', img: 'wp_boxkey', give: { boxkey: 1 } },
     { w: 12, txt: '拼图碎片', glyph: '🧩', img: 'wp_puzzle', give: { piece: 1 } },
-    { w: 15, txt: '星尘×40', glyph: '✨', img: 'wp_dust', give: { dust: 40 } },
+    { w: 17, txt: '星尘×40', glyph: '✨', img: 'wp_dust', give: { dust: 40 } },
     { w: 6,  txt: '转盘券', glyph: '🎫', img: 'wp_ticket', give: { ticket: 1 } },
     { w: 12, txt: '金币×600', glyph: '💰', img: 'wp_gold', give: { coin: 600 } },
     { w: 5,  txt: '大奖 盲盒钥匙×3+星钻60', glyph: '👑', img: 'wp_jackpot', give: { boxkey: 3, gem: 60 } }
@@ -576,7 +576,7 @@ var DG = typeof GameGlobal !== 'undefined' ? (GameGlobal.DG = GameGlobal.DG || {
       pool.push(f);
       if (!DG.SAVE.d.fossils[f.id]) missing.push(f);
     }
-    return (missing.length && Math.random() < 0.6) ? U.pick(missing) : U.pick(pool); // 6成偏向未收集
+    return (missing.length && Math.random() < 0.5) ? U.pick(missing) : U.pick(pool); // 5成偏向未收集
   };
 
   /* ================= 图鉴（矿物Tab=局内方块首见） ================= */
@@ -659,7 +659,7 @@ var DG = typeof GameGlobal !== 'undefined' ? (GameGlobal.DG = GameGlobal.DG || {
     { txt: '金币×200', give: { coin: 200 } }, { txt: '星钻×30', give: { gem: 30 } },
     { txt: '转盘券×2', give: { ticket: 2 } }, { txt: '盲盒钥匙×1', give: { boxkey: 1 } },
     { txt: '星尘×100', give: { dust: 100 } }, { txt: '星钻×50', give: { gem: 50 } },
-    { txt: '柠檬镐+盲盒钥匙×3', give: { boxkey: 3, skin: 'lemon' } }
+    { txt: '柠檬镐+盲盒钥匙×2', give: { boxkey: 2, skin: 'lemon' } }
   ];
   D.milesCum = [ // 累计深度
     { m: 100, txt: '累计100m', give: { gem: 20 } }, { m: 300, txt: '累计300m', give: { boxkey: 1 } },

@@ -57,7 +57,7 @@ var DG = typeof GameGlobal !== 'undefined' ? (GameGlobal.DG = GameGlobal.DG || {
     // 许愿矿灯：定向加权——同稀有度下75%改用许愿套装的未拥有子池（不改稀有度概率，公示不变）
     if (s.wish && s.wish.left > 0) {
       var wpool = pool.filter(function (it) { return it.set.id === s.wish.set && !s.col[it.id]; });
-      if (wpool.length && Math.random() < 0.75) pool = wpool;
+      if (wpool.length && Math.random() < 0.65) pool = wpool;
     }
     var item = U.pick(pool);
     var isNew = !s.col[item.id];
