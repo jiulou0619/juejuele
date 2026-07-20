@@ -69,7 +69,8 @@ var DG = typeof GameGlobal !== 'undefined' ? (GameGlobal.DG = GameGlobal.DG || {
     ctx.strokeStyle = 'rgba(255,255,255,0.85)'; ctx.lineWidth = 2;
     ctx.beginPath(); ctx.arc(x + w - 14, y + h / 2, 15, 0, Math.PI * 2); ctx.stroke();
     UI.label(x + w - 14, y + h / 2 + 1, '＋', { size: 24, bold: true, align: 'center', color: '#fff' });
-    if (UI.tap && U.inRect(UI.tap.x, UI.tap.y, x, y, w, h)) { UI.tap = null; PAY.show('bar'); return true; }
+    // 命中区=右端"+"圆圈那一小块（格子其余部分留给货币说明），上下放宽便于点按
+    if (UI.tap && U.inRect(UI.tap.x, UI.tap.y, x + w - 46, y - 6, 52, h + 12)) { UI.tap = null; PAY.show('bar'); return true; }
     return false;
   };
 

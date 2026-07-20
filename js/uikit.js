@@ -536,8 +536,10 @@ var DG = typeof GameGlobal !== 'undefined' ? (GameGlobal.DG = GameGlobal.DG || {
     var plate = DG.A.images.vu_label;
     for (var i = 0; i < items.length; i++) {
       var x = x0 + i * (w + 10);
-      // 点一下说明这是什么、拿来干嘛（新玩家看图标猜不出来）
-      if (items[i].tip && UI.tap && U.inRect(UI.tap.x, UI.tap.y, x, y, w, h)) {
+      // 点一下说明这是什么、拿来干嘛（新玩家看图标猜不出来）。
+      // 带"+"充值角标的格子要把右端让给 PAY.gemHotspot，否则说明会把充值点击吃掉。
+      var tipW = items[i].plus && !P.ios ? w - 46 : w;
+      if (items[i].tip && UI.tap && U.inRect(UI.tap.x, UI.tap.y, x, y, tipW, h)) {
         UI.tap = null;
         DG.FX.text(Math.min(P.W - 150, Math.max(150, x + w / 2)), y + h + 34, items[i].tip, { color: UI.C.gold, size: 24, life: 2.2, up: false });
       }
