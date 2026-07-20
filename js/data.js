@@ -431,12 +431,12 @@ var DG = typeof GameGlobal !== 'undefined' ? (GameGlobal.DG = GameGlobal.DG || {
 
   /* ================= 商店（永久升级） ================= */
   D.shop = [
-    { id: 'dur',   icon: '⛏️', name: '强化钻齿', desc: '耐久上限+10/级', max: 10, base: 100, mul: 1.40, stat: 'durMax', per: 10 },
-    { id: 'magnet',icon: '🧲', name: '聚金磁铁', desc: '金币获取+5%/级', max: 20, base: 60,  mul: 1.35, stat: 'coinPct', per: 5 },
-    { id: 'depth', icon: '📏', name: '深度红利', desc: '深度结算+10%/级', max: 10, base: 120, mul: 1.40, stat: 'depthPct', per: 10, needM: 100 },
-    { id: 'fever', icon: '🔥', name: '狂热引擎', desc: '狂热时长+0.5s/级', max: 8,  base: 120, mul: 1.45, stat: 'feverDur', per: 0.5, needRuns: 3 },
-    { id: 'combo', icon: '⏱️', name: '连击稳定器', desc: '连击窗口+0.2s/级', max: 5,  base: 150, mul: 1.50, stat: 'comboWin', per: 0.2, needRuns: 3 },
-    { id: 'arms',  icon: '🎯', name: '军火专家', desc: '道具收益+8%/级', max: 10, base: 130, mul: 1.45, stat: 'powerPct', per: 8, needM: 200 }
+    { id: 'dur',   icon: '⛏️', name: '强化钻齿', desc: '耐久上限+10/级', max: 10, base: 200, mul: 1.50, stat: 'durMax', per: 10 },
+    { id: 'magnet',icon: '🧲', name: '聚金磁铁', desc: '金币获取+5%/级', max: 20, base: 120, mul: 1.42, stat: 'coinPct', per: 5 },
+    { id: 'depth', icon: '📏', name: '深度红利', desc: '深度结算+10%/级', max: 10, base: 260, mul: 1.50, stat: 'depthPct', per: 10, needM: 100 },
+    { id: 'fever', icon: '🔥', name: '狂热引擎', desc: '狂热时长+0.5s/级', max: 8,  base: 280, mul: 1.50, stat: 'feverDur', per: 0.5, needRuns: 3 },
+    { id: 'combo', icon: '⏱️', name: '连击稳定器', desc: '连击窗口+0.2s/级', max: 5,  base: 400, mul: 1.60, stat: 'comboWin', per: 0.2, needRuns: 3 },
+    { id: 'arms',  icon: '🎯', name: '军火专家', desc: '道具收益+8%/级', max: 10, base: 300, mul: 1.50, stat: 'powerPct', per: 8, needM: 200 }
   ];
   D.shopPrice = function (item, lv) {
     var gate = [0, 0, 0, 0, 0, 0, 800, 800, 800, 800, 800, 3000, 3000, 3000, 3000, 3000, 8000, 8000, 8000, 8000, 8000];
@@ -754,7 +754,7 @@ var DG = typeof GameGlobal !== 'undefined' ? (GameGlobal.DG = GameGlobal.DG || {
       v: 1,
       opt: { bgm: 1, sfx: 1, bgmVol: 0.3, sfxVol: 0.3 }, // 音量0~1，默认30%；0=静音
       supplies: {},                                      // 已购局前补给（下局消耗）
-      dustBuy: {}, dustWeekKey: '', dustWeekN: 0, dustSsrN: 0, drillLv: 0, // 星尘兑换所
+      dustBuy: {}, dustWeekKey: '', dustWeekN: 0, dustSsrN: 0, drillLv: 0, shopInv: {}, // 星尘兑换所
       coin: 0, gem: 0, boxkey: 0, dust: 0, piece: 0, ticket: 0, ssrTicket: 0,
       runCount: 0, cumM: 0, bestM: 0, bestScore: 0, days: 1, lastDay: 0, yesterM: 0,
       signDay: 0,             // 已签到天数(0~7)

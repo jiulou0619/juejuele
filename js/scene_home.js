@@ -81,7 +81,7 @@ var DG = typeof GameGlobal !== 'undefined' ? (GameGlobal.DG = GameGlobal.DG || {
       if (s.yesterM > 0 && !s.daily.cart) {
         s.daily.cart = true;
         var mOn = DG.D.monthlyActive(s);
-        var cart = Math.min(800, Math.round(s.yesterM)) * (mOn ? 2 : 1);
+        var cart = Math.min(500, Math.round(s.yesterM)) * (mOn ? 2 : 1);
         s.coin += cart;
         DG.FX.banner('🚚 隔夜矿车运回 🪙' + cart + '!' + (mOn ? ' (月卡×2)' : ' (昨日' + s.yesterM + 'm)'), { color: '#ffd76a', size: 40, life: 2.5 });
         DG.SAVE.save();
@@ -272,10 +272,11 @@ var DG = typeof GameGlobal !== 'undefined' ? (GameGlobal.DG = GameGlobal.DG || {
         var tx = 30 + (t % 3) * (bw + 20), ty = dy + Math.floor(t / 3) * (bh + 18);
         var un = unlocked(tabs[t].id);
         var badge = 0;
-        if (tabs[t].id === 'shop' && un) { // 有买得起的升级→红点，让金币的用处看得见
+        if (tabs[t].id === 'shop' && un) { // 现在的金币足够把某一级填满→红点
           for (var si2 = 0; si2 < DG.D.shop.length; si2++) {
             var shIt = DG.D.shop[si2], shLv = s.shop[shIt.id] || 0;
-            if (shLv < shIt.max && s.coin >= DG.D.shopPrice(shIt, shLv).cost) { badge = '!'; break; }
+            var shInv = (s.shopInv && s.shopInv[shIt.id]) || 0;
+            if (shLv < shIt.max && s.coin >= DG.D.shopPrice(shIt, shLv).cost - shInv) { badge = '!'; break; }
           }
         }
         if (tabs[t].id === 'box' && s.boxkey > 0) badge = s.boxkey;

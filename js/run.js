@@ -752,7 +752,7 @@ var DG = typeof GameGlobal !== 'undefined' ? (GameGlobal.DG = GameGlobal.DG || {
     var s = DG.SAVE.d, B = DG.D.calcBonuses();
     var bonusPct = (B.coinPct || 0) / 100;
     // 深度奖励：500m内线性，之后开方衰减（防无尽段金币爆炸）
-    var depthBase = R.m <= 500 ? R.m * 2 : 1000 + Math.round(Math.sqrt(R.m - 500) * 20);
+    var depthBase = R.m <= 500 ? Math.round(R.m * 1.5) : 750 + Math.round(Math.sqrt(R.m - 500) * 18);
     var depthCoin = Math.round(depthBase * (1 + (B.depthPct || 0) / 100) * (R.dayDepthMul || 1));
     var comboCoin = Math.min(50, R.comboPeak) * 2; // 连击结算封顶
     var raw = R.coins + depthCoin + comboCoin;

@@ -218,9 +218,12 @@ var DG = typeof GameGlobal !== 'undefined' ? (GameGlobal.DG = GameGlobal.DG || {
     },
 
     /* ================= 商店 ================= */
+    /* 商店：投入式升级——金币随时投进去填当前级进度条，填满即升1级。
+     * 金币永远有去处（不再"买不起就干瞪眼/买得起秒空"），大额成本也不吓人。 */
     shop: function (ctx, top) {
       var s = DG.SAVE.d;
-      UI.label(P.W / 2, top + 20, '永久升级 · 对每一局生效', { size: 24, align: 'center', color: UI.C.dim });
+      if (!s.shopInv) s.shopInv = {};
+      UI.label(P.W / 2, top + 20, '永久升级 · 投入金币填满进度条=升1级', { size: 22, align: 'center', color: UI.C.dim });
       var itemH = 150;
       var listTop = top + 50;
       UI.scroll('shop', 20, listTop, P.W - 40, P.H - listTop - 20, DG.D.shop.length * (itemH + 14), function () {
@@ -230,23 +233,40 @@ var DG = typeof GameGlobal !== 'undefined' ? (GameGlobal.DG = GameGlobal.DG || {
           var lv = s.shop[it.id] || 0;
           var maxed = lv >= it.max;
           var pr = DG.D.shopPrice(it, lv);
+          var inv = s.shopInv[it.id] || 0;
           var gatedM = it.needM && s.cumM < it.needM;
           var gatedR = it.needRuns && s.runCount < it.needRuns;
           var gateDepth = s.cumM < pr.needM && lv >= 5;
           UI.panel(20, y, P.W - 40, itemH);
           UI.label(50, y + 42, it.icon + ' ' + it.name + '  Lv.' + lv + '/' + it.max, { size: 30, bold: true, color: '#fff' });
           UI.label(50, y + 84, it.desc, { size: 24, color: UI.C.dim });
-          UI.bar(50, y + 112, 300, 14, lv / it.max, UI.C.blue);
-          if (maxed) UI.label(P.W - 80, y + itemH / 2, 'MAX', { size: 28, bold: true, align: 'right', color: '#4cd471' });
-          else if (gatedM || gatedR) UI.label(P.W - 60, y + itemH / 2, gatedM ? '需累计' + it.needM + 'm' : '需' + it.needRuns + '局', { size: 22, align: 'right', color: '#ff9f4a' });
-          else if (gateDepth) UI.label(P.W - 60, y + itemH / 2, '需累计' + pr.needM + 'm', { size: 22, align: 'right', color: '#ff9f4a' });
-          else if (UI.button(P.W - 240, y + 46, 180, 60, '🪙' + pr.cost, { fontSize: 26, disabled: s.coin < pr.cost })) {
-            s.coin -= pr.cost;
-            s.shop[it.id] = lv + 1;
-            DG.D.calcBonuses();
-            DG.SAVE.save();
-            DG.A.sfx('buy', { vibrate: true });
-            DG.FX.text(P.W - 150, y + 30, it.name + ' Lv.' + (lv + 1) + '!', { color: '#4cd471', size: 28 });
+          if (maxed) {
+            UI.bar(50, y + 112, 300, 16, 1, UI.C.green);
+            UI.label(P.W - 80, y + itemH / 2, 'MAX', { size: 28, bold: true, align: 'right', color: UI.C.green });
+            continue;
+          }
+          // 当前级的投入进度条：满了才算升1级
+          UI.bar(50, y + 108, 340, 20, inv / pr.cost, inv >= pr.cost * 0.85 ? UI.C.gold : UI.C.blue, U.fmt(inv) + '/' + U.fmt(pr.cost));
+          if (gatedM || gatedR) UI.label(P.W - 60, y + itemH / 2, gatedM ? '需累计' + it.needM + 'm' : '需' + it.needRuns + '局', { size: 22, align: 'right', color: UI.C.pri });
+          else if (gateDepth) UI.label(P.W - 60, y + itemH / 2, '需累计' + pr.needM + 'm', { size: 22, align: 'right', color: UI.C.pri });
+          else {
+            var amt = Math.min(s.coin, pr.cost - inv);
+            if (UI.button(P.W - 240, y + 46, 180, 60, '投入', { fontSize: 25, disabled: amt <= 0, sub: amt > 0 ? '🪙' + U.fmt(amt) : '金币不足' })) {
+              s.coin -= amt;
+              inv += amt;
+              if (inv >= pr.cost) { // 填满=升级，仪式感拉满
+                s.shop[it.id] = lv + 1;
+                s.shopInv[it.id] = 0;
+                DG.D.calcBonuses();
+                DG.A.sfx('buy', { vibrate: true, strong: true });
+                DG.FX.banner(it.icon + ' ' + it.name + ' Lv.' + (lv + 1) + '!', { color: UI.C.green, size: 46 });
+              } else {
+                s.shopInv[it.id] = inv;
+                DG.A.sfx('coin');
+                DG.FX.text(P.W - 150, y + 30, '+' + U.fmt(amt), { color: UI.C.gold, size: 26 });
+              }
+              DG.SAVE.save();
+            }
           }
         }
       });
