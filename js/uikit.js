@@ -103,8 +103,7 @@ var DG = typeof GameGlobal !== 'undefined' ? (GameGlobal.DG = GameGlobal.DG || {
       }
       txtCol = opts.disabled ? '#9aa08a' : '#fff8e0';
       subCol = opts.disabled ? '#9aa08a' : 'rgba(255,250,225,0.78)';
-      ctx.shadowColor = opts.disabled ? 'transparent' : 'rgba(30,32,14,0.85)';
-      ctx.shadowOffsetY = 2;
+      var dbl = opts.disabled ? null : 'rgba(30,32,14,0.8)'; // 深色底字代替shadow（手机canvas阴影极慢）
     } else if (bsImg) {
       ctx.imageSmoothingEnabled = false;
       if (opts.disabled) ctx.globalAlpha = 0.55;
@@ -138,15 +137,18 @@ var DG = typeof GameGlobal !== 'undefined' ? (GameGlobal.DG = GameGlobal.DG || {
       ctx.font = 'bold ' + Math.floor(fs) + 'px Xiaolai, sans-serif';
       var tw = ctx.measureText(label).width;
       DG.A.draw(ctx, opts.glyph, x + w / 2 - tw / 2 - gs - 6, ly - gs / 2, gs, gs);
+      if (dbl) { ctx.fillStyle = dbl; ctx.fillText(label, x + w / 2 + gs / 2 + 2, ly + 2); }
       ctx.fillStyle = txtCol;
       ctx.fillText(label, x + w / 2 + gs / 2 + 2, ly);
     } else {
       ctx.font = 'bold ' + Math.floor(fs) + 'px Xiaolai, sans-serif';
+      if (dbl) { ctx.fillStyle = dbl; ctx.fillText(label, x + w / 2, ly + 2); }
       ctx.fillStyle = txtCol;
       ctx.fillText(label, x + w / 2, ly);
     }
     if (opts.sub) {
       ctx.font = Math.floor(Math.max(fs * 0.72, 19)) + 'px Xiaolai, sans-serif';
+      if (dbl) { ctx.fillStyle = dbl; ctx.fillText(opts.sub, x + w / 2, y + h / 2 + fs * 0.55 + 2, w - 16); }
       ctx.fillStyle = subCol;
       ctx.fillText(opts.sub, x + w / 2, y + h / 2 + fs * 0.55, w - 16);
     }
@@ -324,8 +326,10 @@ var DG = typeof GameGlobal !== 'undefined' ? (GameGlobal.DG = GameGlobal.DG || {
       var x = x0 + i * (w + 10);
       if (plate) UI.img9('pr_plate', x, y, w, h, 18, 20, false, 1);
       else UI.panel(x, y, w, h, { color: 'rgba(0,0,0,0.5)', r: 26, border: false });
-      DG.A.draw(ctx, items[i].icon, x + 7, y + 7, h - 14, h - 14);
-      UI.label(x + h + 2, y + h / 2 + 1, items[i].txt, { size: 25, bold: true, color: plate ? '#3d3d26' : UI.C.gold, maxW: w - h - 10 });
+      DG.A.draw(ctx, items[i].icon, x + 5, y + 5, h - 10, h - 10);
+      // 奶油色大字+深色底字：橄榄底板上也看得清
+      UI.label(x + h + 3, y + h / 2 + 3, items[i].txt, { size: 27, bold: true, color: 'rgba(30,32,14,0.85)', maxW: w - h - 12 });
+      UI.label(x + h + 3, y + h / 2 + 1, items[i].txt, { size: 27, bold: true, color: '#fff8e0', maxW: w - h - 12 });
     }
     return y + h;
   };

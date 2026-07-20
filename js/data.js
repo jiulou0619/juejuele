@@ -715,7 +715,7 @@ var DG = typeof GameGlobal !== 'undefined' ? (GameGlobal.DG = GameGlobal.DG || {
   D.defaultSave = function () {
     return {
       v: 1,
-      opt: { bgm: 1, sfx: 1 },                       // 音乐/音效开关（音量固定30%）
+      opt: { bgm: 1, sfx: 1, bgmVol: 0.3, sfxVol: 0.3 }, // 音量0~1，默认30%；0=静音
       coin: 0, gem: 0, boxkey: 0, dust: 0, piece: 0, ticket: 0, ssrTicket: 0,
       runCount: 0, cumM: 0, bestM: 0, bestScore: 0, days: 1, lastDay: 0, yesterM: 0,
       signDay: 0,             // 已签到天数(0~7)

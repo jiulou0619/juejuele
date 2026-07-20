@@ -14,10 +14,18 @@ var DG = typeof GameGlobal !== 'undefined' ? (GameGlobal.DG = GameGlobal.DG || {
     if (M.cur.enter) M.cur.enter(arg);
   };
 
-  var last = 0;
+  var last = 0, perfAcc = 0, perfN = 0;
   function loop(ts) {
     var dt = Math.min((ts - last) / 1000 || 0.016, 0.05);
     last = ts;
+    // 帧率自适应：持续掉帧→FX降质（粒子减半），恢复→还原
+    perfAcc += dt; perfN++;
+    if (perfN >= 60) {
+      var avg = perfAcc / perfN;
+      if (avg > 0.026) DG.FX.lowQ = true;
+      else if (avg < 0.02) DG.FX.lowQ = false;
+      perfAcc = 0; perfN = 0;
+    }
     var P = DG.P, ctx = P.ctx;
     P.resetTransform();
     ctx.translate(DG.FX.ox, DG.FX.oy);

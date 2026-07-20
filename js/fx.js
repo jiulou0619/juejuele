@@ -28,14 +28,17 @@ var DG = typeof GameGlobal !== 'undefined' ? (GameGlobal.DG = GameGlobal.DG || {
     if (FX.sprs.length > 12) FX.sprs.shift();
   };
 
-  /* 色块粒子爆开 */
+  /* 色块粒子爆开（lowQ=帧率吃紧时主循环置位，粒子减半、上限收紧） */
+  FX.lowQ = false;
   FX.burst = function (x, y, color, n, speed) {
     n = n || 8;
+    if (FX.lowQ) n = Math.ceil(n / 2);
     for (var i = 0; i < n; i++) {
       var a = Math.random() * Math.PI * 2, sp = (speed || 260) * (0.4 + Math.random() * 0.8);
       FX.parts.push({ x: x, y: y, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp - 120, t: 0, life: 0.5 + Math.random() * 0.3, size: 8 + Math.random() * 10, color: color });
     }
-    while (FX.parts.length > 220) FX.parts.shift();
+    var cap = FX.lowQ ? 100 : 220;
+    while (FX.parts.length > cap) FX.parts.shift();
   };
 
   FX.shake = function (power, dur) { FX.shakeP = Math.max(FX.shakeP, power || 6); FX.shakeT = Math.max(FX.shakeT, dur || 0.2); };

@@ -46,6 +46,10 @@ var DG = typeof GameGlobal !== 'undefined' ? (GameGlobal.DG = GameGlobal.DG || {
     P.scale = canvas.width / 750;
     P.H = canvas.height / P.scale;
     P.winW = winW;
+    // 刘海屏安全区（viewport-fit=cover 时顶部内容避开刘海）
+    var sat = 0;
+    try { sat = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--sat')) || 0; } catch (e) { }
+    P.safeTop = Math.max(10, sat * (750 / winW));
   }
   if (!isWX) {
     layout();
