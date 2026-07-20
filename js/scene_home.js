@@ -35,23 +35,35 @@ var DG = typeof GameGlobal !== 'undefined' ? (GameGlobal.DG = GameGlobal.DG || {
   var resetArm = 0;    // 重置按钮二次确认计时
   var setOpen = false; // 声音设置弹层
 
-  /* 可拖动音量滑条：返回新值(0~1)或null */
+  /* 可拖动音量滑条（矢量件：进度条槽做轨道 + 圆按钮做滑块）。返回新值(0~1)或null */
   function volSlider(ctx, x, y, w, val) {
     var UI = DG.UI, U = DG.U;
-    // 轨道
-    ctx.fillStyle = 'rgba(0,0,0,0.45)';
-    U.rr(ctx, x, y - 9, w, 18, 9); ctx.fill();
-    ctx.fillStyle = '#4aa3ff';
-    if (val > 0) { U.rr(ctx, x, y - 9, Math.max(18, w * val), 18, 9); ctx.fill(); }
-    // 圆钮
+    var trackH = 26, kr = 24;
+    // 轨道 + 已充满段
+    if (!UI.img9('vu_barbase', x, y - trackH / 2, w, trackH, 44, trackH / 2, false, 1)) {
+      ctx.fillStyle = 'rgba(0,0,0,0.45)';
+      U.rr(ctx, x, y - trackH / 2, w, trackH, trackH / 2); ctx.fill();
+    }
+    if (val > 0.01) {
+      var fw = Math.max(trackH - 6, (w - 8) * val);
+      if (!UI.img9('vu_bar_cream', x + 4, y - trackH / 2 + 3, fw, trackH - 6, 26, (trackH - 6) / 2, false, 1)) {
+        ctx.fillStyle = UI.C.gold;
+        U.rr(ctx, x + 4, y - trackH / 2 + 3, fw, trackH - 6, (trackH - 6) / 2); ctx.fill();
+      }
+    }
+    // 滑块（矢量圆按钮）
     var kx = x + w * val;
-    ctx.fillStyle = '#fff8e0';
-    ctx.beginPath(); ctx.arc(kx, y, 17, 0, Math.PI * 2); ctx.fill();
-    ctx.strokeStyle = 'rgba(30,32,14,0.6)'; ctx.lineWidth = 3;
-    ctx.beginPath(); ctx.arc(kx, y, 17, 0, Math.PI * 2); ctx.stroke();
-    // 拖动（判定区上下放宽）
+    var kimg = DG.A.images.vu_knob;
+    if (kimg) ctx.drawImage(kimg, kx - kr, y - kr * kimg.height / kimg.width, kr * 2, kr * 2 * kimg.height / kimg.width);
+    else {
+      ctx.fillStyle = '#efdcb6';
+      ctx.beginPath(); ctx.arc(kx, y, kr, 0, Math.PI * 2); ctx.fill();
+      ctx.strokeStyle = 'rgba(0,0,0,0.6)'; ctx.lineWidth = 3;
+      ctx.beginPath(); ctx.arc(kx, y, kr, 0, Math.PI * 2); ctx.stroke();
+    }
+    // 拖动：整条（含上下留白）都能按，按下即跳到该位置，符合直觉
     var pt = UI.pointer;
-    if (pt.down && U.inRect(pt.downX, pt.downY, x - 30, y - 44, w + 60, 88)) {
+    if (pt.down && U.inRect(pt.downX, pt.downY, x - 34, y - 46, w + 68, 92)) {
       var v = (pt.x - x) / w;
       if (v < 0) v = 0; if (v > 1) v = 1;
       return Math.round(v * 20) / 20;
@@ -108,23 +120,23 @@ var DG = typeof GameGlobal !== 'undefined' ? (GameGlobal.DG = GameGlobal.DG || {
         if (s.opt.bgmVol == null) s.opt.bgmVol = 0.3;
         if (s.opt.sfxVol == null) s.opt.sfxVol = 0.3;
         UI.dim(0.75);
-        var sw = P.W - 120, sx = 60, sh = 420, sy2 = Math.floor((P.H - sh) / 2) - 40;
+        var sw = P.W - 120, sx = 60, sh = 470, sy2 = Math.floor((P.H - sh) / 2) - 40;
         UI.panel(sx, sy2, sw, sh);
-        UI.label(P.W / 2, sy2 + 56, '声 音 设 置', { size: 34, bold: true, align: 'center', color: '#ffd76a' });
-        // 音乐
-        DG.A.draw(ctx, s.opt.bgmVol > 0 ? 'ic_music' : 'ic_music_off', sx + 36, sy2 + 108, 44, 44);
-        UI.label(sx + 96, sy2 + 130, '音乐', { size: 26, bold: true, color: '#fff' });
-        UI.label(sx + sw - 40, sy2 + 130, Math.round(s.opt.bgmVol * 100) + '%', { size: 24, bold: true, align: 'right', color: '#8fd0ff' });
-        var nv = volSlider(ctx, sx + 40, sy2 + 186, sw - 80, s.opt.bgmVol);
+        UI.label(P.W / 2, sy2 + 54, '声 音 设 置', { size: 34, bold: true, align: 'center', color: UI.C.gold });
+        // 音乐：图标+名称+百分比一行，滑条独占一行（拖到底=静音）
+        DG.A.draw(ctx, s.opt.bgmVol > 0 ? 'ic_music' : 'ic_music_off', sx + 38, sy2 + 106, 46, 46);
+        UI.label(sx + 100, sy2 + 129, '音乐', { size: 27, bold: true, color: UI.C.txt });
+        UI.label(sx + sw - 38, sy2 + 129, Math.round(s.opt.bgmVol * 100) + '%', { size: 26, bold: true, align: 'right', color: s.opt.bgmVol > 0 ? UI.C.gold : UI.C.dim });
+        var nv = volSlider(ctx, sx + 48, sy2 + 192, sw - 96, s.opt.bgmVol);
         if (nv != null && nv !== s.opt.bgmVol) { s.opt.bgmVol = nv; s.opt.bgm = nv > 0 ? 1 : 0; DG.A.applyBgmVol(); }
         // 音效
-        DG.A.draw(ctx, 'pr_snd_on', sx + 36, sy2 + 232, 44, 44);
-        UI.label(sx + 96, sy2 + 254, '音效', { size: 26, bold: true, color: '#fff' });
-        UI.label(sx + sw - 40, sy2 + 254, Math.round(s.opt.sfxVol * 100) + '%', { size: 24, bold: true, align: 'right', color: '#8fd0ff' });
-        var nv2 = volSlider(ctx, sx + 40, sy2 + 310, sw - 80, s.opt.sfxVol);
+        DG.A.draw(ctx, s.opt.sfxVol > 0 ? 'pr_snd_on' : 'pr_snd_off', sx + 38, sy2 + 254, 46, 46);
+        UI.label(sx + 100, sy2 + 277, '音效', { size: 27, bold: true, color: UI.C.txt });
+        UI.label(sx + sw - 38, sy2 + 277, Math.round(s.opt.sfxVol * 100) + '%', { size: 26, bold: true, align: 'right', color: s.opt.sfxVol > 0 ? UI.C.gold : UI.C.dim });
+        var nv2 = volSlider(ctx, sx + 48, sy2 + 340, sw - 96, s.opt.sfxVol);
         if (nv2 != null && nv2 !== s.opt.sfxVol) { s.opt.sfxVol = nv2; s.opt.sfx = nv2 > 0 ? 1 : 0; }
         if (UI.justUp) { DG.SAVE.save(); DG.A.sfx('ui_tap'); } // 松手时存档+试听音效
-        if (UI.button(P.W / 2 - 110, sy2 + sh - 76, 220, 56, '关闭', { color: '#3a4356', fontSize: 26 })) setOpen = false;
+        if (UI.button(P.W / 2 - 120, sy2 + sh - 84, 240, 62, '关闭', { color: UI.C.panel2, fontSize: 27 })) setOpen = false;
         return;
       }
       var by = UI.currencyBar([
