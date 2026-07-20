@@ -437,6 +437,13 @@ var DG = typeof GameGlobal !== 'undefined' ? (GameGlobal.DG = GameGlobal.DG || {
     return { cost: Math.round(item.base * Math.pow(item.mul, lv) / 10) * 10, needM: gate[lv + 1] || 8000 };
   };
 
+  /* ================= 局前补给（金币的常青去处：单局增益，出发前买） ================= */
+  D.supplies = [
+    { id: 'rocket', name: '火箭出发', desc: '开局自带1个火箭', cost: 250, icon: 'sp_rocket' },
+    { id: 'armor', name: '加固镐头', desc: '本局耐久上限+25', cost: 500, icon: 'ui_energy' },
+    { id: 'nose', name: '金币嗅觉', desc: '本局金币+30%', cost: 450, icon: 'ui_coin' }
+  ];
+
   /* ================= 盲盒：5套×8件=40藏品 ================= */
   /* 每套绑定一种全局属性；单件按稀有度给小词条，集4半效/集8全效 */
   D.sets = [
@@ -716,6 +723,7 @@ var DG = typeof GameGlobal !== 'undefined' ? (GameGlobal.DG = GameGlobal.DG || {
     return {
       v: 1,
       opt: { bgm: 1, sfx: 1, bgmVol: 0.3, sfxVol: 0.3 }, // 音量0~1，默认30%；0=静音
+      supplies: {},                                      // 已购局前补给（下局消耗）
       coin: 0, gem: 0, boxkey: 0, dust: 0, piece: 0, ticket: 0, ssrTicket: 0,
       runCount: 0, cumM: 0, bestM: 0, bestScore: 0, days: 1, lastDay: 0, yesterM: 0,
       signDay: 0,             // 已签到天数(0~7)

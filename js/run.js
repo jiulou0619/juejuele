@@ -79,6 +79,16 @@ var DG = typeof GameGlobal !== 'undefined' ? (GameGlobal.DG = GameGlobal.DG || {
     R.codexFound = [];     // 本局图鉴新发现（结算汇总展示）
     R.acc = { coin: 0, gem: 0, dur: 0, t: 0 }; // 飘字聚合器（金币/星钻/耐久增减）
     R.coinLog = {};
+    // 局前补给消耗（挑战局不生效不消耗，保持公平）
+    var sup = DG.SAVE.d.supplies || {};
+    if (!R.challenge && (sup.rocket || sup.armor || sup.nose)) {
+      if (sup.armor) { R.durMax += 25; R.dur = R.durMax; }
+      if (sup.nose) R.mods.coinMul = (R.mods.coinMul || 1) * 1.3;
+      if (sup.rocket) R.pendingSpecials.push('rocket');
+      DG.SAVE.d.supplies = {};
+      DG.SAVE.save();
+      DG.FX.banner('🎒 补给已装备!', { color: '#8fd0ff', size: 44, life: 1.2 });
+    }
   };
 
   /* 浮层(三选一)关闭后：弹出排队内容，否则回到 play */

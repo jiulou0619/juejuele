@@ -142,7 +142,7 @@ var DG = typeof GameGlobal !== 'undefined' ? (GameGlobal.DG = GameGlobal.DG || {
       if (UI.button(P.W - 66, by + 10, 56, 56, '', { color: '#3a4356' })) setOpen = true;
       DG.A.draw(ctx, sfxMute ? 'pr_snd_off' : 'pr_snd_on', P.W - 66 + 11, by + 21, 34, 34);
       // 内容整体垂直居中（高屏不再顶部堆内容、底部留大片空地）
-      var contentH = 208 + 128 + 128 + (unlocked('daily') ? 394 : 90) + 202;
+      var contentH = 208 + (s.runCount >= 2 ? 196 : 128) + 128 + (unlocked('daily') ? 394 : 90) + 202;
       var pad = Math.max(0, Math.floor((P.H - by - contentH - 46) / 2));
       // 标题（Logo 图，缺图回退文字）
       var logo = DG.A.images.logo;
@@ -160,8 +160,25 @@ var DG = typeof GameGlobal !== 'undefined' ? (GameGlobal.DG = GameGlobal.DG || {
         DG.Main.go('run');
       }
 
+      // 局前补给：金币的常青去处（第2局后出现）
+      var showSup = s.runCount >= 2;
+      if (showSup) {
+        if (!s.supplies) s.supplies = {};
+        var scw = (P.W - 60 - 24) / 3;
+        for (var sp = 0; sp < DG.D.supplies.length; sp++) {
+          var sit = DG.D.supplies[sp];
+          var sx3 = 30 + sp * (scw + 12);
+          var on = !!s.supplies[sit.id];
+          if (UI.button(sx3, sy + 116, scw, 64, sit.name, { color: on ? null : UI.C.panel2, fontSize: 21, glyph: sit.icon, sub: on ? '✓ 已备好·点击退' : '🪙' + sit.cost })) {
+            if (on) { delete s.supplies[sit.id]; s.coin += sit.cost; }
+            else if (s.coin >= sit.cost) { s.coin -= sit.cost; s.supplies[sit.id] = 1; DG.A.sfx('buy', { vibrate: true }); DG.FX.text(sx3 + scw / 2, sy + 104, sit.desc, { color: '#8fd0ff', size: 24 }); }
+            else DG.FX.text(sx3 + scw / 2, sy + 104, '金币不足', { color: '#ff9f4a', size: 24 });
+            DG.SAVE.save();
+          }
+        }
+      }
       // 今日矿情 + 每日挑战：两张等高卡片，不再散排文字
-      var my = sy + 128;
+      var my = sy + (showSup ? 196 : 128);
       var mod = DG.D.todayMod();
       var cardW = (P.W - 80) / 2;
       UI.panel(30, my, cardW, 108);
@@ -264,6 +281,12 @@ var DG = typeof GameGlobal !== 'undefined' ? (GameGlobal.DG = GameGlobal.DG || {
         var tx = 30 + (t % 3) * (bw + 20), ty = dy + Math.floor(t / 3) * (bh + 18);
         var un = unlocked(tabs[t].id);
         var badge = 0;
+        if (tabs[t].id === 'shop' && un) { // 有买得起的升级→红点，让金币的用处看得见
+          for (var si2 = 0; si2 < DG.D.shop.length; si2++) {
+            var shIt = DG.D.shop[si2], shLv = s.shop[shIt.id] || 0;
+            if (shLv < shIt.max && s.coin >= DG.D.shopPrice(shIt, shLv).cost) { badge = '!'; break; }
+          }
+        }
         if (tabs[t].id === 'box' && s.boxkey > 0) badge = s.boxkey;
         if (tabs[t].id === 'wheel' && un && !s.daily.wheelFree) badge = '!';
         if (tabs[t].id === 'puzzle' && s.piece > 0) badge = s.piece;
