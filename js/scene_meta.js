@@ -115,8 +115,7 @@ var DG = typeof GameGlobal !== 'undefined' ? (GameGlobal.DG = GameGlobal.DG || {
       var rc2 = D.rarCfg[it2.rar];
       ctx.fillStyle = 'rgba(34,40,56,0.96)';
       U.rr(ctx, cx2 + 6, wy + 12, cardW - 12, wh - 24, 12); ctx.fill();
-      ctx.font = '84px Xiaolai, sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-      ctx.fillText(it2.glyph, cx2 + cardW / 2, wy + wh / 2 - 24);
+      UI.glyph(ctx, it2.glyph, cx2 + cardW / 2, wy + wh / 2 - 24, 84);
       ctx.fillStyle = rc2.color;
       ctx.fillRect(cx2 + 12, wy + wh - 30, cardW - 24, 10);
       UI.label(cx2 + cardW / 2, wy + wh - 52, it2.rar, { size: 20, bold: true, align: 'center', color: rc2.color });
@@ -338,8 +337,7 @@ var DG = typeof GameGlobal !== 'undefined' ? (GameGlobal.DG = GameGlobal.DG || {
         var bx = P.W / 2 - 220, bw = 440, bh = 540, byy = P.H / 2 - 320;
         UI.panel(bx, byy, bw, bh, { borderColor: rc.color, color: it.rar === 'SSR' ? '#3a3020' : null });
         UI.label(P.W / 2, byy + 50, it.rar + (boxResult.isNew ? '  ✨NEW✨' : '  (重复)'), { size: 34, bold: true, align: 'center', color: rc.color });
-        ctx.font = '130px Xiaolai, sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-        ctx.fillText(it.glyph, P.W / 2, byy + 180);
+        UI.glyph(ctx, it.glyph, P.W / 2, byy + 180, 130);
         UI.label(P.W / 2, byy + 290, '【' + it.set.name + '】' + it.name, { size: 30, bold: true, align: 'center', color: '#fff' });
         UI.label(P.W / 2, byy + 334, boxResult.isNew ? ('词条: ' + it.set.statName + '+' + rc.pct * (it.set.stat === 'durMax' ? 2 : 1) + (it.set.unit || '')) : ('分解 → ✨星尘+' + boxResult.dust), { size: 24, align: 'center', color: UI.C.dim });
         if (boxResult.multi) UI.label(P.W / 2, byy + 364, boxResult.multi, { size: 20, align: 'center', color: '#8fd0ff' });
@@ -403,8 +401,7 @@ var DG = typeof GameGlobal !== 'undefined' ? (GameGlobal.DG = GameGlobal.DG || {
             if (!UI.img9('bs_button', x, y, cellW, cellH, 13, 16, true, 1)) {
               UI.panel(x, y, cellW, cellH, { color: 'rgba(30,34,48,0.92)', r: 12 });
             }
-            ctx.font = '40px Xiaolai, sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-            ctx.fillText(e.glyph, x + cellW / 2, y + 38);
+            UI.glyph(ctx, e.glyph, x + cellW / 2, y + 38, 42);
             UI.label(x + cellW / 2, y + 82, e.name, { size: 20, align: 'center', color: '#dfe6f2', maxW: cellW - 14 });
             UI.label(x + cellW / 2, y + 108, '💎' + e.gem, { size: 18, align: 'center', color: UI.C.gold });
           } else { // 未发现：羊皮纸内凹格+虚线框（配书页，不再糊深色）
@@ -552,10 +549,7 @@ var DG = typeof GameGlobal !== 'undefined' ? (GameGlobal.DG = GameGlobal.DG || {
           var icon = DG.A.images[D.wheel[wi].img];
           var isz = 84;
           if (icon) ctx.drawImage(icon, wx - isz / 2, wy - isz / 2, isz, isz * icon.height / icon.width);
-          else {
-            ctx.font = '44px Xiaolai, sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-            ctx.fillText(D.wheel[wi].glyph, wx, wy);
-          }
+          else UI.glyph(ctx, D.wheel[wi].glyph, wx, wy, 52);
         }
       } else if (wImg) {
         ctx.save();
@@ -695,9 +689,8 @@ var DG = typeof GameGlobal !== 'undefined' ? (GameGlobal.DG = GameGlobal.DG || {
           var got = i < s.pieceInCur;
           UI.slot(x + 4, y + 4, cell - 8, cell - 8, got ? 1 : 0.45);
           if (got) { ctx.strokeStyle = '#4aa3ff'; ctx.lineWidth = 3; U.rr(ctx, x + 6, y + 6, cell - 12, cell - 12, 8); ctx.stroke(); }
-          ctx.font = '64px Xiaolai, sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
           ctx.globalAlpha = got ? 1 : 0.15;
-          ctx.fillText(pz.pic[i], x + cell / 2, y + cell / 2);
+          UI.glyph(ctx, pz.pic[i], x + cell / 2, y + cell / 2, 64);
           ctx.globalAlpha = 1;
         }
       }
@@ -764,10 +757,7 @@ var DG = typeof GameGlobal !== 'undefined' ? (GameGlobal.DG = GameGlobal.DG || {
             var ih = 92, iw = ih * skImg.width / skImg.height;
             if (iw > 100) { iw = 100; ih = iw * skImg.height / skImg.width; }
             ctx.drawImage(skImg, x + 56 - iw / 2, y + 58 - ih / 2, iw, ih);
-          } else {
-            ctx.font = '56px Xiaolai, sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-            ctx.fillText(sk.glyph, x + 52, y + 56);
-          }
+          } else UI.glyph(ctx, sk.glyph, x + 52, y + 56, 58);
           ctx.globalAlpha = 1;
           UI.label(x + 100, y + 38, sk.name, { size: 26, bold: true, color: owned ? '#fff' : '#8a92a8' });
           UI.label(x + 100, y + 72, sk.statName || '无加成', { size: 20, color: '#8fd0ff' });

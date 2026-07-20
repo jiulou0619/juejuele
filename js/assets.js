@@ -189,6 +189,15 @@ var DG = typeof GameGlobal !== 'undefined' ? (GameGlobal.DG = GameGlobal.DG || {
     sk_default: 'sk_default.png', sk_lava: 'sk_lava.png', sk_ghost: 'sk_ghost.png',
     sk_goldpick: 'sk_goldpick.png', sk_lemon: 'sk_lemon.png', sk_starry: 'sk_starry.png',
     sk_sakura: 'sk_sakura.png', sk_champ: 'sk_champ.png',
+    vu_panel: 'vu_panel.png', vu_slot: 'vu_slot.png', vu_barbase: 'vu_barbase.png',
+    vu_button_yellow: 'vu_button_yellow.png', vu_button_green: 'vu_button_green.png',
+    vu_button_red: 'vu_button_red.png', vu_button_purple: 'vu_button_purple.png',
+    vu_button_blue: 'vu_button_blue.png', vu_button_cream: 'vu_button_cream.png',
+    vu_button_black: 'vu_button_black.png',
+    vu_bar_yellow: 'vu_bar_yellow.png', vu_bar_green: 'vu_bar_green.png', vu_bar_red: 'vu_bar_red.png',
+    vu_bar_purple: 'vu_bar_purple.png', vu_bar_blue: 'vu_bar_blue.png',
+    vu_bar_cream: 'vu_bar_cream.png', vu_bar_black: 'vu_bar_black.png',
+    vu_label: 'vu_labelAdvanced_black.png', vu_container: 'vu_colorContainer_black.png',
     pr_btn: 'pr_btn.png', pr_btn_h: 'pr_btn_h.png', pr_plate: 'pr_plate.png',
     pr_snd_on: 'pr_snd_on.png', pr_snd_off: 'pr_snd_off.png',
     pr_arrow_l: 'pr_arrow_l.png', pr_arrow_r: 'pr_arrow_r.png',
@@ -196,6 +205,14 @@ var DG = typeof GameGlobal !== 'undefined' ? (GameGlobal.DG = GameGlobal.DG || {
     ic_wheel: 'ic_wheel.png', ic_puzzle: 'ic_puzzle.png', ic_gym: 'ic_gym.png',
     ic_music: 'ic_music.png', ic_music_off: 'ic_music_off.png'
   };
+  /* 图标包（白图标已按语义染色烘焙成 assets/ic_*.png），统一走 ic_ 前缀 */
+  A.ICONS = ('coin gem key ticket pick fire flag trophy share tick lock unlock excl quest refresh settings ' +
+    'down back next calendar chest puzzle shop book wheel gym bomb rocket magnet ruler stamina star bone ingot ' +
+    'stone crown tag bag potion snow volcano meteor toxic repair friends hammer shovel compass map light leaf ' +
+    'mountain ghost skull shield clock bell spark rank like sycee starcoin clover rainbow night sun heart wand ' +
+    'bookmark ring axe doc grid info cross gem2 plus mult music music_off target').split(' ');
+  for (var ii = 0; ii < A.ICONS.length; ii++) A.manifest['ic_' + A.ICONS[ii]] = 'ic_' + A.ICONS[ii] + '.png';
+
   A.preload = function () {
     for (var id in A.manifest) (function (key) {
       DG.P.newImage('assets/' + A.manifest[key], function (img) { A.images[key] = img; });
