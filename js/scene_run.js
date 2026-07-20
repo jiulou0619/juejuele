@@ -37,13 +37,13 @@ var DG = typeof GameGlobal !== 'undefined' ? (GameGlobal.DG = GameGlobal.DG || {
       if (hotStreak > 0 && !R.challenge) {
         var gift = hotStreak >= 3 ? 'drill' : hotStreak === 2 ? 'bomb' : 'rocket';
         R.pendingSpecials.push(gift);
-        R.flushSpecials();
         DG.FX.banner('🔥 趁热 x' + hotStreak + ' 赠' + DG.D.specials[gift].glyph, { color: '#ff9f4a', size: 46, life: 1.5, pri: true });
       } else if (R.challenge && R.chMods.length) {
         DG.FX.banner('⚔️ ' + R.chMods[0].name + '·' + R.chMods[1].name, { color: '#ff7a4a', size: 46, life: 2, pri: true });
       } else if (R.dayMod) {
         DG.FX.banner('📻 ' + R.dayMod.name, { color: '#8fd0ff', size: 44, life: 1.5, pri: true });
       }
+      R.armGiftFx(0.6); // 局前补给/趁热赠礼：延时到棋盘落定再演出
     },
 
     /* 新手引导：跟着棋盘状态走的四步软引导，零文字墙 */

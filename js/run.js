@@ -64,6 +64,7 @@ var DG = typeof GameGlobal !== 'undefined' ? (GameGlobal.DG = GameGlobal.DG || {
     R.combo = 0; R.comboT = 0; R.comboPeak = 0;
     R.fever = 0; R.feverT = 0; R.feverCount = 0;
     R.fossilN = 0; R.healN = 0;                 // 每局化石上限 / 回血递减计数
+    R.giftT = 0;                                // 开局赠礼演出倒计时
     R.itemsUsed = 0; R.oreGot = 0; R.blocksCleared = 0;
     R.perks = []; R.perkChoices = null; R.pendingPerks = 0;
     R.tagSetDone = {};              // 已激活的流派羁绊
@@ -417,7 +418,8 @@ var DG = typeof GameGlobal !== 'undefined' ? (GameGlobal.DG = GameGlobal.DG || {
     if (R.dur <= 0) onDead();
   }
 
-  function placePendingSpecials() {
+  /* 把待发道具写进棋盘。loud=true 时演出"某个普通方块被替换成道具"的过程（局前补给用） */
+  function placePendingSpecials(loud) {
     if (!R.pendingSpecials || !R.pendingSpecials.length) return;
     var G = DG.Grid;
     while (R.pendingSpecials.length) {
@@ -429,8 +431,21 @@ var DG = typeof GameGlobal !== 'undefined' ? (GameGlobal.DG = GameGlobal.DG || {
       }
       if (!spots.length) break;
       var s = U.pick(spots);
+      var old = G.at(s[0], s[1]);
+      var p = G.cellXY(s[0], s[1]);
+      var cx = p.x + G.cell / 2, cy = p.y + G.cell / 2;
       G.cells[s[0]][s[1]] = { kind: 'special', sp: sp, fy: 0, spo: G.spOrder++ };
-      DG.FX.text(G.cellXY(s[0], s[1]).x + G.cell / 2, G.cellXY(s[0], s[1]).y + G.cell / 2, '🎁', { size: 40 });
+      if (loud) {
+        // 原方块炸开 → 道具从碎屑里冒出来，玩家能看清"哪一格变成了道具"
+        var col = (old && old.color) || '#c9b79e'; // cell.color 已经是色值
+        DG.FX.burst(cx, cy, col, 14, 220);
+        DG.FX.spr(cx, cy, 'fx_pop_m', 190, 0.45);
+        DG.FX.text(cx, cy - 46, DG.D.specials[sp].name + ' 就位!', { color: '#ffd15c', size: 30, life: 1.3 });
+        DG.FX.shake(5, 0.18);
+        DG.A.sfx('merge', { vibrate: true, strong: true });
+      } else {
+        DG.FX.text(cx, cy, '🎁', { size: 40 });
+      }
     }
   }
 
@@ -602,6 +617,8 @@ var DG = typeof GameGlobal !== 'undefined' ? (GameGlobal.DG = GameGlobal.DG || {
   R.step = function (dt) {
     if (R.state !== 'play') { flushAcc(); return; }
     R.time += dt;
+    // 开局赠礼：棋盘落定后再把某个普通方块变成道具（带炸开演出）
+    if (R.giftT > 0) { R.giftT -= dt; if (R.giftT <= 0) placePendingSpecials(true); }
     // 聚合飘字窗口
     if (R.acc.t > 0) { R.acc.t -= dt; if (R.acc.t <= 0) flushAcc(); }
     // 悬浮事件卡计时：不理会就自动溜走
@@ -775,6 +792,8 @@ var DG = typeof GameGlobal !== 'undefined' ? (GameGlobal.DG = GameGlobal.DG || {
   /* 供场景层调用的引导/连局接口 */
   R.forceFever = startFever;
   R.flushSpecials = placePendingSpecials;
+  /* 开局赠礼延时演出：等棋盘落定再把方块变成道具，玩家才看得见"哪一格变了" */
+  R.armGiftFx = function (delay) { if (R.pendingSpecials.length) R.giftT = delay || 0.55; };
 
   function grantGive(g) {
     var s = DG.SAVE.d;
