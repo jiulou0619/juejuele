@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>挖啊挖 · 原型</title>
+<style>
+  @font-face{font-family:'Xiaolai';src:url('assets/fonts/Xiaolai.ttf');}
+  html,body{margin:0;padding:0;background:#0b0e14;height:100%;overflow:hidden;}
+  body{display:flex;justify-content:center;align-items:center;}
+  canvas{touch-action:none;}
+</style>
+</head>
+<body>
+<canvas id="game"></canvas>
+<script>window.__errs=[];window.onerror=function(m,s,l,c){__errs.push(m+' @'+(s||'').split('/').pop()+':'+l+':'+c);return false;};</script>
+<script>
+// 开发期强制刷新缓存；正式发布可换回普通 script 标签
+(function () {
+  var files = ['platform', 'util', 'assets', 'fx', 'uikit', 'data', 'save', 'grid', 'run', 'pay', 'main', 'scene_run', 'scene_home', 'scene_meta'];
+  var v = Date.now();
+  for (var i = 0; i < files.length; i++) document.write('<script src="js/' + files[i] + '.js?v=' + v + '"><\/script>');
+})();
+</script>
+<script>
+// 等字体就绪再启动（超时兜底直接开）
+(function () {
+  var started = false;
+  function start() { if (!started) { started = true; DG.Main.boot(); } }
+  if (document.fonts && document.fonts.load) {
+    setTimeout(start, 2500);
+    document.fonts.load('28px Xiaolai').then(start, start);
+  } else start();
+})();
+</script>
+</body>
+</html>

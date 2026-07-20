@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"><title>切图工具</title></head>
+<body style="background:#111;color:#8f8;font:14px monospace;white-space:pre-wrap">
+<div id="log">slicing...</div>
+<script>
+/* 自动切图：透明背景连通域分割 → 裁剪 → 缩放 → 转PNG/JPEG → POST /save 落盘 */
+var LOG = [];
+function log(s) { LOG.push(s); document.getElementById('log').textContent = LOG.join('\n'); }
+
+var JOBS = [
+  { src: 'img_27.webp', type: 'single', name: 'fo_o1', out: 420 },  // 蒙娜丽鼠
+  { src: 'img_28.webp', type: 'single', name: 'fo_o2', out: 420 },  // 戴珍珠耳环的鼹鼠(满幅)
+  { src: 'img_29.webp', type: 'single', name: 'fo_o3', out: 420 },  // 鼹星夜
+  { src: 'img_30.webp', type: 'sheet', gap: 24, out: 300, gridFallback: [3, 3], names: [
+    ['fo_g1', 'fo_p1', 'fo_g5'],   // 菊石出土 / 霸王龙骨架 / 精修考古
+    ['fo_g2', 'fo_p3', 'fo_p2'],   // 三叶虫 / 藏宝图 / 三角龙头骨
+    ['fo_g4', 'fo_g3', 'fo_p4']]   // 巨兽足印 / 古鱼化石 / 狗头金
+  }
+];
+var JOBS_OLD = [
+  { src: 'img_01.webp', type: 'sheet', gap: 16, out: 180, gridFallback: [5, 5],
+    rows: [[72, 233], [250, 425], [437, 596], [599, 770], [770, 936]], names: [
+    ['block_red', 'block_blue', 'block_green', 'block_yellow', 'block_purple'],
+    ['blk_rock', 'blk_rock2', 'blk_tnt', 'blk_ice', 'blk_poison'],
+    ['blk_gold', 'blk_repair', 'blk_fossil3', 'blk_fossil2', 'blk_fossil'],
+    ['sp_hrocket', 'sp_rocket', 'sp_bomb', 'sp_drill', 'sp_rainbow'],
+    ['ev_merchant', 'ev_gamble', 'ev_chest', 'ev_puzzle']] },
+  { src: 'img_02.webp', type: 'sheet', gap: 24, out: 320, gridFallback: [2, 2], names: [
+    ['dog_corgi', 'dog_dachs'], ['dog_bulldog', 'dog_schnauzer']] },
+  { src: 'img_03.webp', type: 'bg', name: 'bg_topsoil' },
+  { src: 'img_04.webp', type: 'bg', name: 'bg_stone' },
+  { src: 'img_05.webp', type: 'bg', name: 'bg_ice' },
+  { src: 'img_06.webp', type: 'bg', name: 'bg_gas' },
+  { src: 'img_07.webp', type: 'bg', name: 'bg_lava' },
+  { src: 'img_08.webp', type: 'sheet', gap: 20, out: 240, names: [
+    ['fx_pop_s', 'fx_pop_m', 'fx_blast'], ['fx_dirt', 'fx_rainbow_s', 'fx_rainbow_l']] },
+  { src: 'img_09.webp', type: 'single', name: 'fx_lava_strip', out: 900 },
+  { src: 'img_10.webp', type: 'bgpng', name: 'fx_fever_frame', seedCenter: true },
+  { src: 'img_11.webp', type: 'single', name: 'ui_exit_badge', out: 160 },
+  { src: 'img_12.webp', type: 'single', name: 'wheel_face', out: 640 },
+  { src: 'img_13.webp', type: 'sheet', gap: 26, out: 128, names: [
+    ['ui_coin', 'ui_gem', 'ui_key', 'ui_ticket'], ['ui_dust', 'ui_puzzle', 'ui_energy']] },
+  { src: 'img_14.webp', type: 'single', name: 'logo', out: 720 },
+  { src: 'img_15.webp', type: 'sheet', gap: 30, out: 280, names: [['chest_closed', 'chest_open']] },
+  { src: 'img_16.webp', type: 'sheet', gap: 26, out: 480, names: [
+    ['panel_gold', 'panel_blue', 'panel_gray'], ['panel_dark', 'panel_brown']] }
+];
+
+function loadImg(src) {
+  return new Promise(function (res, rej) {
+    var im = new Image();
+    im.onload = function () { res(im); };
+    im.onerror = function () { rej(new Error('load fail ' + src)); };
+    im.src = '../assets/raw/' + src;
+  });
+}
+function post(name, blob) {
+  return fetch('/save?f=assets/' + name, { method: 'POST', body: blob }).then(function (r) {
+    if (!r.ok) throw new Error('save fail ' + name);
+  });
+}
+function toBlob(cv, mime, q) {
+  return new Promise(function (res) { cv.toBlob(res, mime, q); });
+}
+
+/* 去底：从边缘泛洪清除 白色/棋盘格 假透明背景（深色描边挡住内部）*/
+function stripBg(cv, seedCenter) {
+  var cx = cv.getContext('2d'), w = cv.width, h = cv.height;
+  var id = cx.getImageData(0, 0, w, h), d = id.data;
+  function isBg(p) {
+    var i = p * 4, a = d[i + 3];
+    if (a < 40) return true;
+    var r = d[i], g = d[i + 1], b = d[i + 2];
+    var mx = Math.max(r, g, b), mn = Math.min(r, g, b);
+    return (mx - mn) < 40 && mx > 118; // 白/棋盘格/软阴影灰（深色描边会挡住泛洪）
+  }
+  var vis = new Uint8Array(w * h), stack = [];
+  for (var x = 0; x < w; x++) { stack.push(x); stack.push((h - 1) * w + x); }
+  for (var y = 0; y < h; y++) { stack.push(y * w); stack.push(y * w + w - 1); }
+  if (seedCenter) stack.push(((h >> 1) * w) + (w >> 1));
+  while (stack.length) {
+    var p = stack.pop();
+    if (p < 0 || p >= w * h || vis[p]) continue;
+    vis[p] = 1;
+    if (!isBg(p)) continue;
+    d[p * 4 + 3] = 0;
+    var px = p % w;
+    if (px > 0) stack.push(p - 1);
+    if (px < w - 1) stack.push(p + 1);
+    stack.push(p - w); stack.push(p + w);
+  }
+  cx.putImageData(id, 0, 0);
+}
+
+/* 连通域分割：返回合并后的 bbox 列表 */
+function segment(im, gap, seedCenter) {
+  var w = im.width, h = im.height;
+  var cv = document.createElement('canvas');
+  cv.width = w; cv.height = h;
+  var cx = cv.getContext('2d');
+  cx.drawImage(im, 0, 0);
+  stripBg(cv, seedCenter);
+  var data = cx.getImageData(0, 0, w, h).data;
+  var lab = new Int32Array(w * h);
+  var boxes = [];
+  var stack = [];
+  for (var y = 0; y < h; y++) for (var x = 0; x < w; x++) {
+    var idx = y * w + x;
+    if (lab[idx] || data[idx * 4 + 3] < 40) continue;
+    var id = boxes.length + 1;
+    var bx = { x0: x, y0: y, x1: x, y1: y, n: 0 };
+    stack.length = 0; stack.push(idx); lab[idx] = id;
+    while (stack.length) {
+      var p = stack.pop();
+      var px = p % w, py = (p / w) | 0;
+      bx.n++;
+      if (px < bx.x0) bx.x0 = px; if (px > bx.x1) bx.x1 = px;
+      if (py < bx.y0) bx.y0 = py; if (py > bx.y1) bx.y1 = py;
+      var nb = [p - 1, p + 1, p - w, p + w];
+      for (var k = 0; k < 4; k++) {
+        var q = nb[k];
+        if (q < 0 || q >= w * h) continue;
+        if (k === 0 && px === 0) continue;
+        if (k === 1 && px === w - 1) continue;
+        if (!lab[q] && data[q * 4 + 3] >= 40) { lab[q] = id; stack.push(q); }
+      }
+    }
+    if (bx.n > 120) boxes.push(bx);
+  }
+  // 邻近合并（吸附漂浮小碎片：火星/气泡/光点）
+  var merged = true;
+  while (merged) {
+    merged = false;
+    for (var i = 0; i < boxes.length && !merged; i++) for (var j = i + 1; j < boxes.length; j++) {
+      var a = boxes[i], b = boxes[j];
+      if (a.x0 - gap <= b.x1 && b.x0 - gap <= a.x1 && a.y0 - gap <= b.y1 && b.y0 - gap <= a.y1) {
+        a.x0 = Math.min(a.x0, b.x0); a.y0 = Math.min(a.y0, b.y0);
+        a.x1 = Math.max(a.x1, b.x1); a.y1 = Math.max(a.y1, b.y1);
+        a.n += b.n;
+        boxes.splice(j, 1);
+        merged = true; break;
+      }
+    }
+  }
+  boxes = boxes.filter(function (b) { return b.n > 900 && (b.x1 - b.x0) > 14 && (b.y1 - b.y0) > 14; });
+  return { boxes: boxes, canvas: cv };
+}
+
+/* bbox 分行排序 */
+function toGrid(boxes) {
+  boxes.sort(function (a, b) { return (a.y0 + a.y1) - (b.y0 + b.y1); });
+  var rows = [];
+  for (var i = 0; i < boxes.length; i++) {
+    var b = boxes[i], cy = (b.y0 + b.y1) / 2, placed = false;
+    for (var r = 0; r < rows.length; r++) {
+      var rr = rows[r];
+      if (cy >= rr.y0 - 20 && cy <= rr.y1 + 20) { rr.items.push(b); rr.y0 = Math.min(rr.y0, b.y0); rr.y1 = Math.max(rr.y1, b.y1); placed = true; break; }
+    }
+    if (!placed) rows.push({ y0: b.y0, y1: b.y1, items: [b] });
+  }
+  rows.sort(function (a, b) { return a.y0 - b.y0; });
+  for (var r2 = 0; r2 < rows.length; r2++) rows[r2].items.sort(function (a, b) { return a.x0 - b.x0; });
+  return rows.map(function (r) { return r.items; });
+}
+
+function cropSave(srcCv, b, name, out, pad) {
+  pad = pad == null ? 4 : pad;
+  var x = Math.max(0, b.x0 - pad), y = Math.max(0, b.y0 - pad);
+  var w = Math.min(srcCv.width, b.x1 + pad) - x, h = Math.min(srcCv.height, b.y1 + pad) - y;
+  var scale = Math.min(1, out / Math.max(w, h));
+  var cv = document.createElement('canvas');
+  cv.width = Math.round(w * scale); cv.height = Math.round(h * scale);
+  var cx = cv.getContext('2d');
+  cx.imageSmoothingQuality = 'high';
+  cx.drawImage(srcCv, x, y, w, h, 0, 0, cv.width, cv.height);
+  return toBlob(cv, 'image/png').then(function (bl) { return post(name + '.png', bl); });
+}
+
+async function run() {
+  for (var j = 0; j < JOBS.length; j++) {
+    var job = JOBS[j];
+    try {
+      var im = await loadImg(job.src);
+      if (job.type === 'rects') { // 显式矩形原样裁剪（像素UI）
+        for (var ri = 0; ri < job.items.length; ri++) {
+          var it = job.items[ri];
+          var cvr = document.createElement('canvas');
+          cvr.width = it.w; cvr.height = it.h;
+          cvr.getContext('2d').drawImage(im, it.x, it.y, it.w, it.h, 0, 0, it.w, it.h);
+          await post(it.name + '.png', await toBlob(cvr, 'image/png'));
+        }
+        log(job.src + ' -> rects x' + job.items.length);
+      } else if (job.type === 'bg') { // 铺满 750x1334 → JPEG
+        var cv = document.createElement('canvas');
+        cv.width = 750; cv.height = 1334;
+        var cx = cv.getContext('2d');
+        var s = Math.max(750 / im.width, 1334 / im.height);
+        cx.drawImage(im, (750 - im.width * s) / 2, (1334 - im.height * s) / 2, im.width * s, im.height * s);
+        await post(job.name + '.jpg', await toBlob(cv, 'image/jpeg', 0.82));
+        log(job.src + ' -> ' + job.name + '.jpg');
+      } else if (job.type === 'bgpng') { // 去底后拉伸 750x1334 保留透明 → PNG
+        var cvS = document.createElement('canvas');
+        cvS.width = im.width; cvS.height = im.height;
+        cvS.getContext('2d').drawImage(im, 0, 0);
+        stripBg(cvS, job.seedCenter);
+        var cv2 = document.createElement('canvas');
+        cv2.width = 750; cv2.height = 1334;
+        cv2.getContext('2d').drawImage(cvS, 0, 0, 750, 1334);
+        await post(job.name + '.png', await toBlob(cv2, 'image/png'));
+        log(job.src + ' -> ' + job.name + '.png');
+      } else if (job.type === 'single') { // 全部合并为一个精灵
+        var seg = segment(im, 9999);
+        if (!seg.boxes.length) { log('!! ' + job.src + ' no sprite'); continue; }
+        await cropSave(seg.canvas, seg.boxes[0], job.name, job.out || 512);
+        log(job.src + ' -> ' + job.name + '.png');
+      } else { // sheet
+        var seg2 = segment(im, job.gap);
+        if (job.rows) { // 显式行坐标：列内投影
+          var W2 = seg2.canvas.width;
+          var dat2 = seg2.canvas.getContext('2d').getImageData(0, 0, W2, seg2.canvas.height).data;
+          function colSpans(y0, y1, want) {
+            var occ = new Array(W2).fill(0);
+            for (var yy = y0; yy < y1; yy++) for (var xx = 0; xx < W2; xx++)
+              if (dat2[(yy * W2 + xx) * 4 + 3] >= 40) occ[xx]++;
+            var thr = Math.max(2, (y1 - y0) * 0.004);
+            var segs = [], cur = null;
+            for (var i2 = 0; i2 < W2; i2++) {
+              if (occ[i2] > thr) { if (!cur) cur = { s: i2, e: i2 }; else cur.e = i2; }
+              else if (cur && i2 - cur.e > 8) { segs.push(cur); cur = null; }
+            }
+            if (cur) segs.push(cur);
+            if (segs.length !== want) { segs = []; for (var k2 = 0; k2 < want; k2++) segs.push({ s: Math.floor(W2 * k2 / want), e: Math.floor(W2 * (k2 + 1) / want) - 1 }); }
+            return segs;
+          }
+          var saved2 = 0;
+          for (var jr = 0; jr < job.rows.length; jr++) {
+            var ry = job.rows[jr];
+            var cs = colSpans(ry[0], ry[1], job.names[jr].length);
+            for (var jc = 0; jc < cs.length; jc++) {
+              if (!job.names[jr][jc]) continue;
+              var bb2 = { x0: 1e9, y0: 1e9, x1: -1, y1: -1, n: 0 };
+              for (var yy3 = ry[0]; yy3 < ry[1]; yy3++) for (var xx3 = cs[jc].s; xx3 <= cs[jc].e; xx3++) {
+                if (dat2[(yy3 * W2 + xx3) * 4 + 3] >= 40) {
+                  bb2.n++;
+                  if (xx3 < bb2.x0) bb2.x0 = xx3; if (xx3 > bb2.x1) bb2.x1 = xx3;
+                  if (yy3 < bb2.y0) bb2.y0 = yy3; if (yy3 > bb2.y1) bb2.y1 = yy3;
+                }
+              }
+              if (bb2.n > 900) { await cropSave(seg2.canvas, bb2, job.names[jr][jc], job.out); saved2++; }
+            }
+          }
+          log(job.src + ' -> explicit rows saved ' + saved2);
+          continue;
+        }
+        var grid = toGrid(seg2.boxes);
+        var shape = grid.map(function (r) { return r.length; }).join(',');
+        var want = job.names.map(function (r) { return r.length; }).join(',');
+        if (shape === want) {
+          for (var r = 0; r < grid.length; r++)
+            for (var c = 0; c < grid[r].length; c++)
+              await cropSave(seg2.canvas, grid[r][c], job.names[r][c], job.out);
+          log(job.src + ' -> ' + shape + ' ok');
+        } else if (job.gridFallback) {
+          // 投影切割：按 alpha 投影空隙找真实行列边界；找不到足够空隙则均分
+          var W = seg2.canvas.width, H = seg2.canvas.height;
+          var dat = seg2.canvas.getContext('2d').getImageData(0, 0, W, H).data;
+          function spans(a0, a1, b0, b1, horiz, want) { // 在区间内找 want 个内容段
+            var len = horiz ? (b1 - b0) : (a1 - a0);
+            var occ = new Array(len).fill(0);
+            for (var yy = a0; yy < a1; yy++) for (var xx = b0; xx < b1; xx++)
+              if (dat[(yy * W + xx) * 4 + 3] >= 40) occ[horiz ? (xx - b0) : (yy - a0)]++;
+            var thr = Math.max(2, (horiz ? (a1 - a0) : (b1 - b0)) * 0.004);
+            var segs = [], cur = null;
+            for (var i2 = 0; i2 < len; i2++) {
+              if (occ[i2] > thr) { if (!cur) cur = { s: i2, e: i2 }; else cur.e = i2; }
+              else if (cur && i2 - cur.e > 6) { segs.push(cur); cur = null; }
+            }
+            if (cur) segs.push(cur);
+            if (segs.length !== want) { // 均分兜底
+              segs = [];
+              for (var k2 = 0; k2 < want; k2++) segs.push({ s: Math.floor(len * k2 / want), e: Math.floor(len * (k2 + 1) / want) - 1 });
+            }
+            return segs;
+          }
+          var saved = 0;
+          var rowSegs = spans(0, H, 0, W, false, job.names.length);
+          for (var gr = 0; gr < rowSegs.length; gr++) {
+            var ry0 = rowSegs[gr].s, ry1 = rowSegs[gr].e + 1;
+            var colSegs = spans(ry0, ry1, 0, W, true, job.names[gr].length);
+            for (var gc = 0; gc < colSegs.length; gc++) {
+              if (!job.names[gr][gc]) continue;
+              var cx0 = colSegs[gc].s, cx1 = colSegs[gc].e + 1;
+              var bb = { x0: 1e9, y0: 1e9, x1: -1, y1: -1, n: 0 };
+              for (var yy2 = ry0; yy2 < ry1; yy2++) for (var xx2 = cx0; xx2 < cx1; xx2++) {
+                if (dat[(yy2 * W + xx2) * 4 + 3] >= 40) {
+                  bb.n++;
+                  if (xx2 < bb.x0) bb.x0 = xx2; if (xx2 > bb.x1) bb.x1 = xx2;
+                  if (yy2 < bb.y0) bb.y0 = yy2; if (yy2 > bb.y1) bb.y1 = yy2;
+                }
+              }
+              if (bb.n > 900) { await cropSave(seg2.canvas, bb, job.names[gr][gc], job.out); saved++; }
+            }
+          }
+          log(job.src + ' -> projCut saved ' + saved + ' (found[' + shape + '])');
+        } else {
+          log('!! ' + job.src + ' 网格不匹配 found[' + shape + '] want[' + want + ']');
+        }
+      }
+    } catch (e) { log('!! ' + job.src + ' ' + e.message); }
+  }
+  log('ALL DONE');
+  window.__DONE = true;
+}
+window.__DONE = false;
+run();
+</script>
+</body>
+</html>

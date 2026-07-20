@@ -1,0 +1,13 @@
+{
+  "description": "挖啊挖 - 微信小游戏原型",
+  "setting": {
+    "urlCheck": false,
+    "es6": true,
+    "postcss": false,
+    "minified": false
+  },
+  "compileType": "game",
+  "libVersion": "latest",
+  "appid": "touristappid",
+  "projectname": "digo"
+}
